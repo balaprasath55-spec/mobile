@@ -142,7 +142,7 @@ export function PriceEstimator() {
     "h-12 w-full appearance-auto rounded-2xl border border-navy/10 bg-white px-4 text-base text-navy dark:border-white/10 dark:bg-navy-800 dark:text-white";
 
   return (
-    <div className="rounded-2xl bg-white p-6 soft-shadow dark:bg-navy-800 md:p-8">
+    <div className="rounded-2xl bg-white p-4 soft-shadow dark:bg-navy-800 sm:p-6 md:p-8">
       {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
       <div className="grid gap-4 md:grid-cols-3">
         <label className="block text-sm">
@@ -226,7 +226,7 @@ export function PriceEstimator() {
         {!loadingEstimate && estimate ? (
           <div>
             <p className="text-sm text-muted">Estimated repair range</p>
-            <p className="mt-2 font-display text-3xl font-semibold text-navy dark:text-white md:text-4xl">
+            <p className="mt-2 break-words font-display text-2xl font-semibold text-navy dark:text-white sm:text-3xl md:text-4xl">
               {formatINR(estimate.priceMin)} – {formatINR(estimate.priceMax)}
             </p>
             <p className="mt-2 text-xs text-muted">Final quote after free diagnosis. Parts &amp; labour included in range.</p>

@@ -255,15 +255,16 @@ export default async function HomePage() {
       <Section className="pt-0">
         <Reveal>
           <div className="overflow-hidden rounded-2xl border border-navy/5 soft-shadow dark:border-white/10">
-          <div className="flex items-center gap-2 border-b border-navy/5 bg-surface px-4 py-3 text-sm text-muted dark:border-white/10 dark:bg-navy-800">
-            <MapPin className="h-4 w-4 text-accent" />
+          <div className="flex items-start gap-2 border-b border-navy/5 bg-surface px-4 py-3 text-sm text-muted dark:border-white/10 dark:bg-navy-800">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
             <a
               href={SITE.mapsUrl}
               target="_blank"
               rel="noreferrer"
-              className="hover:text-accent"
+              className="min-w-0 break-words hover:text-accent"
             >
-              {SITE.address}
+              <span className="sm:hidden">{SITE.addressShort}</span>
+              <span className="hidden sm:inline">{SITE.address}</span>
             </a>
           </div>
           <iframe

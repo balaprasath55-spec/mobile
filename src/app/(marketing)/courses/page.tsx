@@ -98,7 +98,7 @@ export default function CoursesPage() {
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent">
                   <Icon className="h-5 w-5" />
                 </span>
-                <h3 className="mt-4 font-display text-lg font-semibold text-navy dark:text-white">{c.title}</h3>
+                <h3 className="mt-4 pr-12 font-display text-lg font-semibold text-navy dark:text-white">{c.title}</h3>
                 <p className="mt-2 flex-1 text-sm text-muted">{c.desc}</p>
                 <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted">
                   <span className="rounded-full bg-surface px-2.5 py-1 dark:bg-navy-900">{c.level}</span>

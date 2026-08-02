@@ -45,7 +45,7 @@ export function AnimatedHero() {
               initial={reduce ? false : { opacity: 0, y: 28 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.08, ease: motionEase }}
-              className="mt-5 font-display text-[2.35rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl md:mt-6 md:text-6xl lg:text-7xl"
+              className="mt-5 font-display text-[2rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl md:mt-6 md:text-6xl lg:text-7xl"
             >
               Expert care for
               <span className="block bg-gradient-to-r from-white via-accent-200 to-sky-300 bg-clip-text text-transparent">
@@ -67,14 +67,19 @@ export function AnimatedHero() {
               initial={reduce ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.28, ease: motionEase }}
-              className="mt-8 flex flex-wrap gap-3"
+              className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
             >
-              <Button asChild size="lg" className="bg-white text-navy hover:bg-white/90">
+              <Button asChild size="lg" className="w-full bg-white text-navy hover:bg-white/90 sm:w-auto">
                 <Link href="/enquiry">
                   Book a repair <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/25 text-white hover:bg-white/10">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="w-full border-white/25 text-white hover:bg-white/10 sm:w-auto"
+              >
                 <Link href="/pricing">Estimate price</Link>
               </Button>
             </motion.div>
@@ -84,7 +89,7 @@ export function AnimatedHero() {
             initial={reduce ? false : { opacity: 0, scale: 0.9, rotate: -4 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: motionEase }}
-            className="relative mx-auto w-full max-w-sm"
+            className="relative mx-auto w-full max-w-sm overflow-hidden px-2 sm:overflow-visible sm:px-0"
           >
             <div className="absolute -inset-6 animate-pulse-soft rounded-[2rem] bg-accent/20 blur-2xl" />
             <div className="relative aspect-[9/16] max-h-[480px] overflow-hidden rounded-[2rem] border border-white/20 bg-gradient-to-b from-white/15 to-white/5 p-3 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur">
@@ -117,7 +122,7 @@ export function AnimatedHero() {
             <motion.div
               animate={reduce ? undefined : { y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -left-6 bottom-24 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm backdrop-blur-md"
+              className="absolute bottom-20 left-2 rounded-2xl border border-white/15 bg-white/10 px-3 py-2.5 text-sm backdrop-blur-md sm:-left-6 sm:bottom-24 sm:px-4 sm:py-3"
             >
               <p className="font-semibold">30–90 min</p>
               <p className="text-xs text-white/60">Typical screen job</p>
@@ -125,7 +130,7 @@ export function AnimatedHero() {
             <motion.div
               animate={reduce ? undefined : { y: [0, 12, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              className="absolute -right-4 top-24 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm backdrop-blur-md"
+              className="absolute right-2 top-20 rounded-2xl border border-white/15 bg-white/10 px-3 py-2.5 text-sm backdrop-blur-md sm:-right-4 sm:top-24 sm:px-4 sm:py-3"
             >
               <p className="font-semibold">146k+</p>
               <p className="text-xs text-white/60">Instagram family</p>

@@ -11,7 +11,7 @@ export function ReviewCarousel() {
   const item = testimonials[index];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-navy p-8 text-white md:p-12">
+    <div className="relative overflow-hidden rounded-2xl bg-navy p-6 text-white sm:p-8 md:p-12">
       <motion.div
         key={item.name}
         initial={{ opacity: 0, x: 20 }}
@@ -23,8 +23,10 @@ export function ReviewCarousel() {
             <Star key={i} className="h-4 w-4 fill-current" />
           ))}
         </div>
-        <p className="mt-6 max-w-2xl font-display text-2xl leading-snug md:text-3xl">&ldquo;{item.text}&rdquo;</p>
-        <p className="mt-6 text-sm text-white/70">
+        <p className="mt-5 max-w-2xl font-display text-xl leading-snug sm:mt-6 sm:text-2xl md:text-3xl">
+          &ldquo;{item.text}&rdquo;
+        </p>
+        <p className="mt-5 text-sm text-white/70 sm:mt-6">
           {item.name} · {item.location}
           {"source" in item && item.source ? ` · ${item.source}` : ""}
         </p>
@@ -33,7 +35,7 @@ export function ReviewCarousel() {
         <button
           type="button"
           aria-label="Previous review"
-          className="rounded-full border border-white/20 p-2 hover:bg-white/10"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/20 hover:bg-white/10"
           onClick={() => setIndex((i) => (i - 1 + testimonials.length) % testimonials.length)}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -41,7 +43,7 @@ export function ReviewCarousel() {
         <button
           type="button"
           aria-label="Next review"
-          className="rounded-full border border-white/20 p-2 hover:bg-white/10"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/20 hover:bg-white/10"
           onClick={() => setIndex((i) => (i + 1) % testimonials.length)}
         >
           <ChevronRight className="h-4 w-4" />

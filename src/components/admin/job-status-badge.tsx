@@ -12,7 +12,13 @@ export function JobStatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium", styles[status] ?? styles.CLOSED)}>
+    <span
+      className={cn(
+        "inline-flex max-w-[9rem] shrink-0 truncate rounded-full px-2.5 py-0.5 text-[11px] font-medium sm:max-w-none sm:text-xs",
+        styles[status] ?? styles.CLOSED
+      )}
+      title={status.replaceAll("_", " ")}
+    >
       {status.replaceAll("_", " ")}
     </span>
   );

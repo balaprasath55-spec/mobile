@@ -46,7 +46,7 @@ export function DevicePicker() {
               <span className="font-display text-sm font-semibold text-white drop-shadow md:text-base">
                 {d.name}
               </span>
-              <span className="mt-1 block text-xs text-white/70 opacity-0 transition group-hover:opacity-100">
+              <span className="mt-1 block text-xs text-white/80 sm:text-white/70 sm:opacity-0 sm:transition sm:group-hover:opacity-100">
                 Repair now →
               </span>
             </div>

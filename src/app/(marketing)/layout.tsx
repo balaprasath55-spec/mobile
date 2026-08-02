@@ -6,7 +6,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
   return (
     <>
       <SiteHeader />
-      <main className="min-h-[70vh]">{children}</main>
+      <main className="min-h-[70vh] pb-24 md:pb-0">{children}</main>
       <SiteFooter />
       <FloatingActions />
     </>

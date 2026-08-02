@@ -30,18 +30,24 @@ export function BeforeAfterSlider({
 
   return (
     <div
-      className="relative aspect-square w-full cursor-ew-resize touch-none overflow-hidden rounded-2xl bg-white select-none soft-shadow sm:aspect-[5/4]"
+      className="relative aspect-square w-full cursor-ew-resize touch-pan-y overflow-hidden rounded-2xl bg-white select-none soft-shadow sm:aspect-[5/4]"
       onPointerDown={(e) => {
         dragging.current = true;
         (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+        (e.currentTarget as HTMLDivElement).style.touchAction = "none";
         update(e.clientX, e.currentTarget);
       }}
       onPointerMove={(e) => {
         if (!dragging.current) return;
         update(e.clientX, e.currentTarget);
       }}
-      onPointerUp={() => {
+      onPointerUp={(e) => {
         dragging.current = false;
+        (e.currentTarget as HTMLDivElement).style.touchAction = "";
+      }}
+      onPointerCancel={(e) => {
+        dragging.current = false;
+        (e.currentTarget as HTMLDivElement).style.touchAction = "";
       }}
       role="img"
       aria-label={alt}

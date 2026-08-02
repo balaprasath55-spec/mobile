@@ -51,10 +51,8 @@ export function ServiceCardGrid({ limit }: { limit?: number }) {
                 {service.title}
               </h3>
               <p className="relative mt-2 text-sm leading-relaxed text-muted">{service.summary}</p>
-              <p className="relative mt-4 text-xs font-medium text-accent opacity-0 transition group-hover:opacity-100">
-                Learn more →
-              </p>
-              <p className="relative mt-2 text-xs text-muted group-hover:hidden">
+              <p className="relative mt-4 text-xs font-medium text-accent">Learn more →</p>
+              <p className="relative mt-1 text-xs text-muted">
                 {service.turnaround} · Warranty {service.warranty}
               </p>
             </Link>
