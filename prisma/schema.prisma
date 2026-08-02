@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+}
+
+enum RepairStatus {
+  RECEIVED
+  DIAGNOSED
+  IN_REPAIR
+  QUALITY_CHECK
+  READY_FOR_DELIVERY
+  DELIVERED
+  CLOSED
+}
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  CLOSED
+}
+
+model AdminUser {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(ADMIN)
+  isActive     Boolean    @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime   @default(now())
+  auditLogs    AuditLog[]
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  altPhone  String?
+  address   String?
+  location  String?
+  createdAt DateTime @default(now())
+  repairs   Repair[]
+
+  @@index([phone])
+}
+
+model Brand {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  isActive Boolean @default(true)
+  models   Model[]
+}
+
+model Model {
+  id        String          @id @default(cuid())
+  brandId   String
+  brand     Brand           @relation(fields: [brandId], references: [id])
+  name      String
+  isActive  Boolean         @default(true)
+  estimates PriceEstimate[]
+  repairs   Repair[]
+}
+
+model Issue {
+  id        String          @id @default(cuid())
+  name      String          @unique
+  isActive  Boolean         @default(true)
+  estimates PriceEstimate[]
+}
+
+model PriceEstimate {
+  id        String   @id @default(cuid())
+  modelId   String
+  model     Model    @relation(fields: [modelId], references: [id])
+  issueId   String
+  issue     Issue    @relation(fields: [issueId], references: [id])
+  priceMin  Decimal
+  priceMax  Decimal
+  isActive  Boolean  @default(true)
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  @@unique([modelId, issueId])
+}
+
+model Technician {
+  id       String   @id @default(cuid())
+  name     String
+  phone    String?
+  isActive Boolean  @default(true)
+  repairs  Repair[]
+}
+
+model Repair {
+  id             String        @id @default(cuid())
+  jobId          String        @unique
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  modelId        String?
+  model          Model?        @relation(fields: [modelId], references: [id])
+  deviceBrandRaw String?
+  deviceModelRaw String?
+  imei           String?
+  issue          String
+  status         RepairStatus  @default(RECEIVED)
+  technicianId   String?
+  technician     Technician?   @relation(fields: [technicianId], references: [id])
+  amount         Decimal?
+  advancePaid    Decimal       @default(0)
+  warrantyDays   Int?
+  deliveryDate   DateTime?
+  deliveredAt    DateTime?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  images         RepairImage[]
+  parts          RepairPart[]
+
+  @@index([status])
+  @@index([imei])
+}
+
+model RepairImage {
+  id        String   @id @default(cuid())
+  repairId  String
+  repair    Repair   @relation(fields: [repairId], references: [id])
+  url       String
+  createdAt DateTime @default(now())
+}
+
+model Supplier {
+  id      String          @id @default(cuid())
+  name    String
+  contact String?
+  address String?
+  items   InventoryItem[]
+}
+
+model InventoryItem {
+  id                String       @id @default(cuid())
+  partModel         String
+  supplierId        String?
+  supplier          Supplier?    @relation(fields: [supplierId], references: [id])
+  purchasePrice     Decimal
+  sellingPrice      Decimal
+  quantity          Int          @default(0)
+  lowStockThreshold Int          @default(3)
+  invoiceNumber     String?
+  purchaseDate      DateTime?
+  createdAt         DateTime     @default(now())
+  usedIn            RepairPart[]
+}
+
+model RepairPart {
+  id              String        @id @default(cuid())
+  repairId        String
+  repair          Repair        @relation(fields: [repairId], references: [id])
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantityUsed    Int           @default(1)
+}
+
+model Enquiry {
+  id        String        @id @default(cuid())
+  name      String
+  phone     String
+  device    String?
+  issue     String?
+  location  String?
+  message   String?
+  imageUrl  String?
+  status    EnquiryStatus @default(NEW)
+  createdAt DateTime      @default(now())
+}
+
+model CourseNotify {
+  id        String   @id @default(cuid())
+  name      String
+  contact   String
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id])
+  action      String
+  entityType  String
+  entityId    String
+  changes     Json?
+  timestamp   DateTime  @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
