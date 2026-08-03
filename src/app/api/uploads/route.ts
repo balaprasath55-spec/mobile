@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/jpg"]);
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 
+/**
+ * Demo uploads: return a data URL instead of writing to disk.
+ * Amplify SSR has a read-only filesystem, so public/uploads/ cannot be used.
+ */
 export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
@@ -23,13 +25,10 @@ export async function POST(req: NextRequest) {
     }
 
     const bytes = Buffer.from(await file.arrayBuffer());
-    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-    const name = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const dir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, name), bytes);
+    const mime = file.type === "image/jpg" ? "image/jpeg" : file.type;
+    const url = `data:${mime};base64,${bytes.toString("base64")}`;
 
-    return NextResponse.json({ url: `/uploads/${name}` }, { status: 201 });
+    return NextResponse.json({ url }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }

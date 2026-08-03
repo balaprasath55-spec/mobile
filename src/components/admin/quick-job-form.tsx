@@ -7,6 +7,7 @@ import { BrandModelSelect } from "@/components/admin/brand-model-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { fileToDataUrl } from "@/lib/image-data-url";
 
 type Props = {
   defaults?: {
@@ -33,16 +34,6 @@ export function QuickJobForm({ defaults }: Props) {
     setPreview(f ? URL.createObjectURL(f) : null);
   }
 
-  async function uploadPhoto(): Promise<string> {
-    if (!file) throw new Error("Photo required");
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/uploads", { method: "POST", body: fd });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Upload failed");
-    return data.url as string;
-  }
-
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -55,7 +46,7 @@ export function QuickJobForm({ defaults }: Props) {
     const fd = new FormData(e.currentTarget);
 
     try {
-      const imageUrl = await uploadPhoto();
+      const imageUrl = await fileToDataUrl(file);
       const payload = {
         name: String(fd.get("name") ?? "").trim(),
         phone: String(fd.get("phone") ?? "").trim(),

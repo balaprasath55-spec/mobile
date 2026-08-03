@@ -7,6 +7,7 @@ import { Section, SectionHeading } from "@/components/marketing/section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { fileToDataUrl } from "@/lib/image-data-url";
 
 function EnquiryForm() {
   const params = useSearchParams();
@@ -37,17 +38,13 @@ function EnquiryForm() {
     const fd = new FormData(form);
 
     try {
-      const uploadFd = new FormData();
-      uploadFd.append("file", file);
-      const uploadRes = await fetch("/api/uploads", { method: "POST", body: uploadFd });
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed");
+      const imageUrl = await fileToDataUrl(file);
 
       const payload = {
         name: String(fd.get("name") ?? "").trim(),
         phone: String(fd.get("phone") ?? "").trim(),
         issue: String(fd.get("issue") ?? "").trim(),
-        imageUrl: uploadData.url as string,
+        imageUrl,
         device: String(fd.get("device") ?? "").trim() || undefined,
         location: String(fd.get("location") ?? "").trim() || undefined,
         message: String(fd.get("message") ?? "").trim() || undefined,
