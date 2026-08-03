@@ -1,12 +1,12 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Camera, ChevronDown, ImagePlus } from "lucide-react";
 import { BrandModelSelect } from "@/components/admin/brand-model-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { createLocalQuickJob } from "@/lib/demo-local";
 import { fileToDataUrl } from "@/lib/image-data-url";
 
 type Props = {
@@ -20,7 +20,6 @@ type Props = {
 };
 
 export function QuickJobForm({ defaults }: Props) {
-  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -46,8 +45,12 @@ export function QuickJobForm({ defaults }: Props) {
     const fd = new FormData(e.currentTarget);
 
     try {
-      const imageUrl = await fileToDataUrl(file);
-      const payload = {
+      const imageUrl = await fileToDataUrl(file, 960, 0.6);
+      const amountRaw = fd.get("amount");
+      const amount =
+        amountRaw === null || amountRaw === "" ? null : Number(amountRaw);
+
+      const { repair } = createLocalQuickJob({
         name: String(fd.get("name") ?? "").trim(),
         phone: String(fd.get("phone") ?? "").trim(),
         issue: String(fd.get("issue") ?? "").trim(),
@@ -56,20 +59,12 @@ export function QuickJobForm({ defaults }: Props) {
         deviceBrandRaw: String(fd.get("deviceBrandRaw") ?? ""),
         deviceModelRaw: String(fd.get("deviceModelRaw") ?? ""),
         location: String(fd.get("location") ?? ""),
-        amount: fd.get("amount") === "" ? null : Number(fd.get("amount")),
+        amount: Number.isFinite(amount as number) ? amount : null,
         notes: String(fd.get("notes") ?? ""),
-      };
-
-      const res = await fetch("/api/jobs/quick", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not save");
 
-      router.push(`/repairs/${data.repair.id}`);
-      router.refresh();
+      // Hard nav so the detail page can read localStorage reliably
+      window.location.href = `/repairs/${repair.id}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);

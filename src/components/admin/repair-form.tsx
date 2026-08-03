@@ -6,15 +6,18 @@ import { BrandModelSelect } from "@/components/admin/brand-model-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { updateLocalRepair } from "@/lib/demo-local";
 
 export function RepairForm({
   customerId,
   initial,
   repairId,
   defaults,
+  local = false,
 }: {
   customerId: string;
   repairId?: string;
+  local?: boolean;
   initial?: {
     issue?: string;
     deviceBrandRaw?: string | null;
@@ -44,20 +47,38 @@ export function RepairForm({
     const payload = {
       customerId,
       issue: String(fd.get("issue") ?? ""),
-      modelId: String(fd.get("modelId") ?? "") || "",
-      deviceBrandRaw: String(fd.get("deviceBrandRaw") ?? ""),
-      deviceModelRaw: String(fd.get("deviceModelRaw") ?? ""),
-      imei: String(fd.get("imei") ?? ""),
+      modelId: String(fd.get("modelId") ?? "") || null,
+      deviceBrandRaw: String(fd.get("deviceBrandRaw") ?? "") || null,
+      deviceModelRaw: String(fd.get("deviceModelRaw") ?? "") || null,
+      imei: String(fd.get("imei") ?? "") || null,
       amount: fd.get("amount") === "" ? null : Number(fd.get("amount")),
       advancePaid: fd.get("advancePaid") === "" ? 0 : Number(fd.get("advancePaid")),
       warrantyDays: fd.get("warrantyDays") === "" ? null : Number(fd.get("warrantyDays")),
-      notes: String(fd.get("notes") ?? ""),
+      notes: String(fd.get("notes") ?? "") || null,
     };
+
+    if (local && repairId) {
+      const updated = updateLocalRepair(repairId, payload);
+      setLoading(false);
+      if (!updated) {
+        setError("Could not save repair job");
+        return;
+      }
+      window.location.href = `/repairs/${repairId}`;
+      return;
+    }
 
     const res = await fetch(repairId ? `/api/repairs/${repairId}` : "/api/repairs", {
       method: repairId ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        modelId: payload.modelId || "",
+        deviceBrandRaw: payload.deviceBrandRaw || "",
+        deviceModelRaw: payload.deviceModelRaw || "",
+        imei: payload.imei || "",
+        notes: payload.notes || "",
+      }),
     });
 
     setLoading(false);

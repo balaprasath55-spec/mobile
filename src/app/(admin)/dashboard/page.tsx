@@ -3,6 +3,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { Plus, Phone, ClipboardList, Inbox } from "lucide-react";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
+import { LocalRecentJobs } from "@/components/admin/local-recent-jobs";
 import { Button } from "@/components/ui/button";
 import { DEMO_LOGIN } from "@/lib/demo-auth";
 import { getStore } from "@/lib/demo-store";
@@ -66,9 +67,11 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
+      <LocalRecentJobs />
+
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-navy dark:text-white">Recent jobs</h2>
+          <h2 className="text-sm font-semibold text-navy dark:text-white">Sample jobs</h2>
           <Button asChild size="sm" variant="ghost">
             <Link href="/repairs">See all</Link>
           </Button>
