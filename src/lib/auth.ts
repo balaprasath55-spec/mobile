@@ -1,15 +1,20 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { DEMO_ADMIN } from "@/lib/demo-store";
+import { AUTH_SECRET, ensureAuthUrl } from "@/lib/auth-secret";
+
+ensureAuthUrl();
 
 /**
- * Amplify / production requires these env vars:
- * - NEXTAUTH_SECRET       → openssl rand -base64 32
+ * Amplify / production (optional overrides):
+ * - NEXTAUTH_SECRET
  * - NEXTAUTH_URL          → https://your-app.amplifyapp.com  (no trailing slash)
  * - NEXT_PUBLIC_SITE_URL  → same public URL
+ *
+ * A demo fallback secret is used when Amplify does not inject env vars at runtime.
  */
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: AUTH_SECRET,
   session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 7 },
   pages: {
     signIn: "/login",

@@ -12,7 +12,7 @@ export default function LoginForm() {
   const params = useSearchParams();
   const [error, setError] = useState(
     params.get("error") === "Configuration"
-      ? "Server auth is misconfigured. Set NEXTAUTH_SECRET and NEXTAUTH_URL in Amplify."
+      ? "Auth configuration error. Redeploy the latest build, then try again."
       : params.get("error")
         ? "Sign-in failed. Check email/password or server auth settings."
         : ""
@@ -33,7 +33,7 @@ export default function LoginForm() {
     if (res?.error) {
       setError(
         res.error === "Configuration"
-          ? "Server auth is misconfigured. Set NEXTAUTH_SECRET and NEXTAUTH_URL in Amplify."
+          ? "Auth configuration error. Redeploy the latest build, then try again."
           : "Invalid email or password"
       );
       return;
