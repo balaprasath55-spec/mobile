@@ -7,7 +7,6 @@ type Ctx = { params: { id: string } };
 
 export async function PATCH(req: NextRequest, { params }: Ctx) {
   const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
 
   const body = await req.json();
   const parsed = repairStatusSchema.safeParse(body);

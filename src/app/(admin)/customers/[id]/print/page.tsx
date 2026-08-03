@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { PrintButton } from "@/components/admin/print-button";
-import { authOptions } from "@/lib/auth";
 import { getStore } from "@/lib/demo-store";
 import { SITE, formatINR } from "@/lib/utils";
 
@@ -17,9 +15,6 @@ export default async function PrintReceiptPage({
   params: { id: string };
   searchParams: { jobId?: string };
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
-
   const store = getStore();
   const customer = store.customers.find((c) => c.id === params.id);
   if (!customer) notFound();

@@ -1,21 +1,32 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import type { AppRole } from "@/lib/rbac";
-import { hasMinRole } from "@/lib/rbac";
+import { DEMO_LOGIN } from "@/lib/demo-auth";
 
-export async function requireAdmin(minRole: AppRole = "STAFF") {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
-  }
-  const role = session.user.role as AppRole | undefined;
-  if (!hasMinRole(role, minRole)) {
-    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
-  }
+type AuthOk = {
+  session: {
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      role: AppRole;
+    };
+  };
+  userId: string;
+  role: AppRole;
+};
+
+/** Demo mode: always allows (no NextAuth). Keeps the old call-site shape. */
+export async function requireAdmin(minRole: AppRole = "STAFF"): Promise<AuthOk> {
+  void minRole;
   return {
-    session,
-    userId: session.user.id,
-    role: role!,
+    session: {
+      user: {
+        id: "admin_demo",
+        email: DEMO_LOGIN.email,
+        name: DEMO_LOGIN.name,
+        role: "SUPER_ADMIN",
+      },
+    },
+    userId: "admin_demo",
+    role: "SUPER_ADMIN",
   };
 }

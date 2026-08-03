@@ -7,8 +7,7 @@ import { repairSchema } from "@/lib/validators";
 type Ctx = { params: { id: string } };
 
 export async function GET(_req: NextRequest, { params }: Ctx) {
-  const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
+  await requireAdmin();
 
   const store = getStore();
   const repair = store.repairs.find((r) => r.id === params.id);
@@ -29,7 +28,6 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
 
 export async function PUT(req: NextRequest, { params }: Ctx) {
   const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
 
   const body = await req.json();
   const parsed = repairSchema.safeParse(body);

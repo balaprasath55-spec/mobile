@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import { QuickJobForm } from "@/components/admin/quick-job-form";
-import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "New job" };
@@ -12,9 +9,6 @@ export default async function NewRepairPage({
 }: {
   searchParams: { name?: string; phone?: string; issue?: string; device?: string };
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
-
   return (
     <div>
       <h1 className="font-display text-xl font-semibold text-navy dark:text-white md:text-2xl">

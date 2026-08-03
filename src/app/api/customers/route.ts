@@ -9,8 +9,7 @@ import { emptyToNull } from "@/lib/repairs";
 import { customerSchema } from "@/lib/validators";
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
+  await requireAdmin();
 
   const sp = req.nextUrl.searchParams;
   const q = sp.get("q")?.trim().toLowerCase() ?? "";
@@ -66,7 +65,6 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
 
   const body = await req.json();
   const parsed = customerSchema.safeParse(body);

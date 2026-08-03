@@ -12,8 +12,7 @@ import { enquiryStatusSchema } from "@/lib/validators";
 type Ctx = { params: { id: string } };
 
 export async function GET(_req: NextRequest, { params }: Ctx) {
-  const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
+  await requireAdmin();
 
   const enquiry = getStore().enquiries.find((e) => e.id === params.id);
   if (!enquiry) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -22,7 +21,6 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
 
 export async function PUT(req: NextRequest, { params }: Ctx) {
   const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
 
   const body = await req.json();
   const parsed = enquiryStatusSchema.safeParse(body);
@@ -50,7 +48,6 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
 
 export async function POST(req: NextRequest, { params }: Ctx) {
   const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
 
   const body = (await req.json().catch(() => ({}))) as { createJob?: boolean };
   const store = getStore();

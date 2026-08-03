@@ -1,8 +1,8 @@
-import { getServerSession } from "next-auth";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
 import { AdminBottomNav } from "@/components/admin/bottom-nav";
+import { DEMO_AUTH_COOKIE, DEMO_LOGIN } from "@/lib/demo-auth";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -13,8 +13,8 @@ const links = [
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions).catch(() => null);
-  if (!session) redirect("/login");
+  const authed = cookies().get(DEMO_AUTH_COOKIE)?.value;
+  if (!authed) redirect("/login");
 
   return (
     <div className="min-h-screen bg-surface dark:bg-navy-900">
@@ -43,7 +43,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/dashboard" className="font-display text-sm font-semibold text-navy md:hidden dark:text-white">
               MR Admin
             </Link>
-            <p className="ml-auto truncate text-xs text-muted md:text-sm">{session.user?.email}</p>
+            <p className="ml-auto truncate text-xs text-muted md:text-sm">{DEMO_LOGIN.email}</p>
           </header>
           <div className="flex-1 p-3 pb-24 md:p-6 md:pb-6">{children}</div>
           <AdminBottomNav />

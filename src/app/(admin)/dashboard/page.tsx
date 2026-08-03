@@ -1,21 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import { format } from "date-fns";
 import { Plus, Phone, ClipboardList, Inbox } from "lucide-react";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
 import { Button } from "@/components/ui/button";
-import { authOptions } from "@/lib/auth";
+import { DEMO_LOGIN } from "@/lib/demo-auth";
 import { getStore } from "@/lib/demo-store";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
-
   const store = getStore();
   const pending = store.repairs.filter((r) =>
     ["RECEIVED", "DIAGNOSED", "IN_REPAIR", "QUALITY_CHECK", "READY_FOR_DELIVERY"].includes(r.status)
@@ -29,7 +24,7 @@ export default async function DashboardPage() {
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-xl font-semibold text-navy dark:text-white md:text-2xl">
-          Hi, {session.user?.name?.split(" ")[0] ?? "Admin"}
+          Hi, {DEMO_LOGIN.name.split(" ")[0]}
         </h1>
         <p className="mt-1 text-sm text-muted">Quick intake for walk-ins</p>
       </div>

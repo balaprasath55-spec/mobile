@@ -28,8 +28,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
+  await requireAdmin();
 
   const enquiries = getStore().enquiries;
   return NextResponse.json({ enquiries });

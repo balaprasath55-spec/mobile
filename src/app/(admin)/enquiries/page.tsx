@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import { format } from "date-fns";
 import { DataTable, Pagination } from "@/components/admin/data-table";
 import { EnquiryActions } from "@/components/admin/enquiry-actions";
 import { Button } from "@/components/ui/button";
-import { authOptions } from "@/lib/auth";
 import { getStore, type DemoEnquiryStatus } from "@/lib/demo-store";
 
 export const dynamic = "force-dynamic";
@@ -18,9 +15,6 @@ export default async function EnquiriesAdminPage({
 }: {
   searchParams: { status?: string; page?: string };
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
-
   const status = searchParams.status as DemoEnquiryStatus | undefined;
   const page = Math.max(1, Number(searchParams.page ?? 1));
   const pageSize = 20;

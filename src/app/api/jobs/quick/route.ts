@@ -27,7 +27,6 @@ const quickJobSchema = z.object({
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
 
   const body = await req.json();
   const parsed = quickJobSchema.safeParse(body);

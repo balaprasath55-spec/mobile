@@ -1,13 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { CustomerForm } from "@/components/admin/customer-form";
 import { DataTable } from "@/components/admin/data-table";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
 import { Button } from "@/components/ui/button";
-import { authOptions } from "@/lib/auth";
 import { getModelWithBrand, getStore } from "@/lib/demo-store";
 import { formatINR } from "@/lib/utils";
 
@@ -21,9 +19,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CustomerDetailPage({ params }: Props) {
-  const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
-
   const store = getStore();
   const customer = store.customers.find((c) => c.id === params.id);
   if (!customer) notFound();

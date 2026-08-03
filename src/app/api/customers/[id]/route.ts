@@ -13,8 +13,7 @@ import { customerSchema } from "@/lib/validators";
 type Ctx = { params: { id: string } };
 
 export async function GET(_req: NextRequest, { params }: Ctx) {
-  const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
+  await requireAdmin();
 
   const store = getStore();
   const customer = store.customers.find((c) => c.id === params.id);
@@ -34,7 +33,6 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
 
 export async function PUT(req: NextRequest, { params }: Ctx) {
   const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
 
   const body = await req.json();
   const parsed = customerSchema.safeParse(body);
@@ -65,7 +63,6 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
 
 export async function DELETE(_req: NextRequest, { params }: Ctx) {
   const auth = await requireAdmin("ADMIN");
-  if ("error" in auth) return auth.error;
 
   const store = getStore();
   const existing = store.customers.find((c) => c.id === params.id);

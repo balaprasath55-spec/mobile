@@ -1,12 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import { DataTable, Pagination } from "@/components/admin/data-table";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { authOptions } from "@/lib/auth";
 import { getStore } from "@/lib/demo-store";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +14,6 @@ export default async function CustomersPage({
 }: {
   searchParams: { q?: string; location?: string; page?: string };
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
-
   const q = searchParams.q?.trim().toLowerCase() ?? "";
   const location = searchParams.location?.trim().toLowerCase() ?? "";
   const page = Math.max(1, Number(searchParams.page ?? 1));

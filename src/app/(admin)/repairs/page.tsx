@@ -1,13 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import { format } from "date-fns";
 import { DataTable, Pagination } from "@/components/admin/data-table";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { authOptions } from "@/lib/auth";
 import { getStore, type DemoRepairStatus } from "@/lib/demo-store";
 import { REPAIR_STATUS_FLOW, REPAIR_STATUS_LABELS } from "@/lib/repairs";
 import { formatINR } from "@/lib/utils";
@@ -20,9 +17,6 @@ export default async function RepairsPage({
 }: {
   searchParams: { q?: string; status?: string; page?: string };
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session) redirect("/login");
-
   const q = searchParams.q?.trim().toLowerCase() ?? "";
   const status = searchParams.status as DemoRepairStatus | undefined;
   const page = Math.max(1, Number(searchParams.page ?? 1));
