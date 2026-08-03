@@ -2,9 +2,19 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { DEMO_ADMIN } from "@/lib/demo-store";
 
+/**
+ * Amplify / production requires these env vars:
+ * - NEXTAUTH_SECRET       → openssl rand -base64 32
+ * - NEXTAUTH_URL          → https://your-app.amplifyapp.com  (no trailing slash)
+ * - NEXT_PUBLIC_SITE_URL  → same public URL
+ */
 export const authOptions: NextAuthOptions = {
-  session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
+  secret: process.env.NEXTAUTH_SECRET,
+  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 7 },
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
   providers: [
     CredentialsProvider({
       name: "Credentials",

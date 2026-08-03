@@ -2,14 +2,21 @@
 
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function LoginForm() {
   const router = useRouter();
-  const [error, setError] = useState("");
+  const params = useSearchParams();
+  const [error, setError] = useState(
+    params.get("error") === "Configuration"
+      ? "Server auth is misconfigured. Set NEXTAUTH_SECRET and NEXTAUTH_URL in Amplify."
+      : params.get("error")
+        ? "Sign-in failed. Check email/password or server auth settings."
+        : ""
+  );
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -24,7 +31,11 @@ export default function LoginForm() {
     });
     setLoading(false);
     if (res?.error) {
-      setError("Invalid email or password");
+      setError(
+        res.error === "Configuration"
+          ? "Server auth is misconfigured. Set NEXTAUTH_SECRET and NEXTAUTH_URL in Amplify."
+          : "Invalid email or password"
+      );
       return;
     }
     router.push("/dashboard");
