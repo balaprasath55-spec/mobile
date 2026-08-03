@@ -16,6 +16,19 @@ ensureAuthUrl();
 export const authOptions: NextAuthOptions = {
   secret: AUTH_SECRET,
   session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 7 },
+  // Explicit cookies avoid __Secure- / host mismatches behind Amplify CDN
+  useSecureCookies: true,
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: true,
+      },
+    },
+  },
   pages: {
     signIn: "/login",
     error: "/login",

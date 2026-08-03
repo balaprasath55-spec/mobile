@@ -1,16 +1,13 @@
 import { Suspense } from "react";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
 import LoginForm from "@/components/admin/login-form";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin login" };
 
 export default async function LoginPage() {
-  const session = await getServerSession(authOptions).catch(() => null);
-  if (session) redirect("/dashboard");
-
+  // Do not auto-redirect when a session exists: on Amplify, Node may decode
+  // the JWT while Edge middleware cannot (secret mismatch), which caused
+  // /login ↔ /dashboard redirect loops. Client sign-in still goes to dashboard.
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-sm text-muted">Loading…</div>}>
       <LoginForm />
