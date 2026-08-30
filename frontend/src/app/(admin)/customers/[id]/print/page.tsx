@@ -1,0 +1,91 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { format } from "date-fns";
+import { PrintButton } from "@/components/admin/print-button";
+import type { DemoCustomer, DemoRepair } from "@/lib/demo-store";
+import { serverApi } from "@/lib/server-api";
+import { SITE, formatINR } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Print receipt", robots: { index: false } };
+
+export default async function PrintReceiptPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { jobId?: string };
+}) {
+  let customer: DemoCustomer;
+  let repairs: DemoRepair[];
+  try {
+    const data = await serverApi<{ customer: DemoCustomer & { repairs: DemoRepair[] } }>(
+      `/api/customers/${params.id}`
+    );
+    customer = data.customer;
+    repairs = data.customer.repairs ?? [];
+  } catch {
+    notFound();
+  }
+
+  if (searchParams.jobId) {
+    repairs = repairs.filter((r) => r.id === searchParams.jobId);
+  }
+  repairs = repairs.slice(0, searchParams.jobId ? 1 : 5);
+
+  return (
+    <div className="mx-auto max-w-2xl bg-white p-8 text-ink print:p-0">
+      <div className="mb-6 flex items-start justify-between border-b border-navy/10 pb-4">
+        <div>
+          <p className="font-display text-xl font-semibold">{SITE.shortName}</p>
+          <p className="mt-1 text-xs text-muted">{SITE.address}</p>
+          <p className="text-xs text-muted">{SITE.phone}</p>
+        </div>
+        <PrintButton />
+      </div>
+
+      <h1 className="font-display text-lg font-semibold">Customer receipt</h1>
+      <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <dt className="text-muted">Name</dt>
+          <dd className="font-medium">{customer.name}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">Phone</dt>
+          <dd className="font-medium">{customer.phone}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">Location</dt>
+          <dd>{customer.location ?? "N/A"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">Printed</dt>
+          <dd>{format(new Date(), "dd MMM yyyy HH:mm")}</dd>
+        </div>
+      </dl>
+
+      <table className="mt-8 w-full text-left text-sm">
+        <thead>
+          <tr className="border-b border-navy/10 text-muted">
+            <th className="py-2 font-medium">Job</th>
+            <th className="py-2 font-medium">Issue</th>
+            <th className="py-2 font-medium">Status</th>
+            <th className="py-2 text-right font-medium">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {repairs.map((r) => (
+            <tr key={r.id} className="border-b border-navy/5">
+              <td className="py-2 font-mono text-xs">{r.jobId}</td>
+              <td className="py-2">{r.issue}</td>
+              <td className="py-2">{r.status.replaceAll("_", " ")}</td>
+              <td className="py-2 text-right">{r.amount != null ? formatINR(r.amount) : "N/A"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <p className="mt-8 text-xs text-muted">Thank you for choosing {SITE.name}.</p>
+    </div>
+  );
+}
