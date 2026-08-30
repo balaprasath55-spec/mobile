@@ -23,7 +23,7 @@ export function ReviewCarousel() {
             <Star key={i} className="h-4 w-4 fill-current" />
           ))}
         </div>
-        <p className="mt-5 max-w-2xl font-display text-xl leading-snug sm:mt-6 sm:text-2xl md:text-3xl">
+        <p className="mt-5 max-w-2xl font-display text-xl sm:mt-6 sm:text-2xl md:text-3xl">
           &ldquo;{item.text}&rdquo;
         </p>
         <p className="mt-5 text-sm text-white/70 sm:mt-6">

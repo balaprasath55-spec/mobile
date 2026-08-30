@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Clock, GraduationCap, Wrench, Cpu, Battery, Briefcase } from "lucide-react";
 import { CourseNotifyForm } from "@/components/marketing/course-notify-form";
 import { Section, SectionHeading } from "@/components/marketing/section";
@@ -6,9 +7,21 @@ import { Section, SectionHeading } from "@/components/marketing/section";
 export const metadata: Metadata = {
   title: "Repair Courses",
   description:
-    "MR Mobile Zone repair courses — hands-on training from our Chennai workshop. Courses will be available soon.",
+    "MR Mobile Zone repair courses: hands-on training from our Chennai workshop. Courses will be available soon.",
   alternates: { canonical: "/courses" },
 };
+
+/** Landscape certificate photos — first row */
+const landscapeGraduates = [8, 1, 2, 3, 7].map((i) => ({
+  image: `/courses/student-${i}.jpg`,
+  alt: `MR Mobile Zone Service training graduate ${i + 1} with Certificate of Training`,
+}));
+
+/** Portrait certificate photos — second row */
+const portraitGraduates = [4, 5, 6, 0, 9].map((i) => ({
+  image: `/courses/student-${i}.jpg`,
+  alt: `MR Mobile Zone Service training graduate ${i + 1} with Certificate of Training`,
+}));
 
 const upcoming = [
   {
@@ -30,7 +43,7 @@ const upcoming = [
     title: "Microsoldering fundamentals",
     level: "Intermediate",
     duration: "7 days",
-    desc: "Board-level intro — jumpers, IC reballing basics, water damage triage on real boards.",
+    desc: "Board-level intro: jumpers, IC reballing basics, water damage triage on real boards.",
   },
   {
     icon: GraduationCap,
@@ -44,14 +57,14 @@ const upcoming = [
     title: "Shop setup & business",
     level: "All levels",
     duration: "2 days",
-    desc: "Parts sourcing, pricing, warranty cards, CRM habits, and courier repair operations.",
+    desc: "Parts sourcing, pricing, CRM habits, and courier repair operations.",
   },
   {
     icon: Clock,
     title: "Weekend crash workshop",
     level: "Beginner",
     duration: "2 days",
-    desc: "Fast track for hobbyists — common walk-in jobs with live demos on the bench.",
+    desc: "Fast track for hobbyists: common walk-in jobs with live demos on the bench.",
   },
 ] as const;
 
@@ -65,7 +78,7 @@ export default function CoursesPage() {
           </p>
           <SectionHeading
             title="Repair courses"
-            subtitle="Hands-on mobile repair training from the MR Mobile Zone workshop in Chennai. Courses will be available soon — join the waitlist for launch dates."
+            subtitle="Hands-on mobile repair training from the MR Mobile Zone workshop in Chennai. Courses will be available soon. Join the waitlist for launch dates."
             align="center"
           />
         </div>
@@ -77,7 +90,7 @@ export default function CoursesPage() {
             <h2 className="font-display text-xl font-semibold text-navy dark:text-white md:text-2xl">
               Planned modules
             </h2>
-            <p className="mt-1 text-sm text-muted">Dummy preview — final syllabus may change at launch.</p>
+            <p className="mt-1 text-sm text-muted">Preview only. Final syllabus may change at launch.</p>
           </div>
           <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
             Not open for enrollment yet
@@ -118,6 +131,54 @@ export default function CoursesPage() {
       </Section>
 
       <Section>
+        <SectionHeading
+          title="Students who completed the course"
+          subtitle="Certified graduates from MR Mobile Zone Service training — hands-on repair skills, certificate on completion."
+        />
+        <div className="space-y-4">
+          {/* Row 1 — horizontal photos */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 md:gap-4">
+            {landscapeGraduates.map((g) => (
+              <figure
+                key={g.image}
+                className="overflow-hidden rounded-2xl border border-navy/5 bg-surface soft-shadow dark:border-white/10 dark:bg-navy-900"
+              >
+                <div className="relative aspect-[3/2] w-full">
+                  <Image
+                    src={g.image}
+                    alt={g.alt}
+                    fill
+                    className="object-contain object-top"
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                  />
+                </div>
+              </figure>
+            ))}
+          </div>
+
+          {/* Row 2 — vertical photos */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 md:gap-4">
+            {portraitGraduates.map((g) => (
+              <figure
+                key={g.image}
+                className="overflow-hidden rounded-2xl border border-navy/5 bg-surface soft-shadow dark:border-white/10 dark:bg-navy-900"
+              >
+                <div className="relative aspect-[3/4] w-full">
+                  <Image
+                    src={g.image}
+                    alt={g.alt}
+                    fill
+                    className="object-contain object-top"
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                  />
+                </div>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      <Section className="bg-surface dark:bg-navy-900/50">
         <div className="mx-auto grid max-w-4xl gap-10 md:grid-cols-2 md:items-center">
           <div>
             <h2 className="font-display text-2xl font-semibold text-navy dark:text-white">What to expect</h2>
@@ -125,11 +186,11 @@ export default function CoursesPage() {
               <li>• Live bench practice in our Chennai workshop</li>
               <li>• Genuine-quality parts & ESD-safe tools</li>
               <li>• Tamil + English instruction</li>
-              <li>• Certificate on completion (at launch)</li>
+              <li>• Certificate on completion</li>
               <li>• Limited batch sizes for personal attention</li>
             </ul>
             <p className="mt-6 text-sm text-muted">
-              Exact fees, dates, and seats will be announced when enrollment opens. Leave your contact — we’ll
+              Exact fees, dates, and seats will be announced when enrollment opens. Leave your contact and we’ll
               message you first.
             </p>
           </div>

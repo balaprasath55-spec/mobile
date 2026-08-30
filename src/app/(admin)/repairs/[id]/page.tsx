@@ -1,25 +1,23 @@
 import type { Metadata } from "next";
-import { LocalRepairDetail, RepairDetailView } from "@/components/admin/repair-detail-view";
-import { getStore } from "@/lib/demo-store";
+import { notFound } from "next/navigation";
+import { RepairDetailView } from "@/components/admin/repair-detail-view";
+import { getCustomerById, getRepairById } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: { id: string } };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const r = getStore().repairs.find((x) => x.id === params.id);
+  const r = await getRepairById(params.id);
   return { title: r?.jobId ?? "Repair" };
 }
 
 export default async function RepairDetailPage({ params }: Props) {
-  const store = getStore();
-  const repair = store.repairs.find((r) => r.id === params.id);
-  const customer = repair ? store.customers.find((c) => c.id === repair.customerId) : null;
+  const repair = await getRepairById(params.id);
+  if (!repair) notFound();
 
-  if (repair && customer) {
-    return <RepairDetailView repair={repair} customer={customer} />;
-  }
+  const customer = await getCustomerById(repair.customerId);
+  if (!customer) notFound();
 
-  // Amplify: new jobs are saved in the browser — hydrate from localStorage
-  return <LocalRepairDetail id={params.id} />;
+  return <RepairDetailView repair={repair} customer={customer} />;
 }

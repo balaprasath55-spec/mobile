@@ -1,12 +1,15 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { format } from "date-fns";
+import { AdminSearchBar } from "@/components/admin/admin-search-bar";
 import { DataTable, Pagination } from "@/components/admin/data-table";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { getStore, type DemoRepairStatus } from "@/lib/demo-store";
+import { queryRepairs } from "@/lib/db";
+import type { DemoRepairStatus } from "@/lib/demo-store";
 import { REPAIR_STATUS_FLOW, REPAIR_STATUS_LABELS } from "@/lib/repairs";
+import { highlightSequentialMatch } from "@/lib/search-utils";
 import { formatINR } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -17,33 +20,19 @@ export default async function RepairsPage({
 }: {
   searchParams: { q?: string; status?: string; page?: string };
 }) {
-  const q = searchParams.q?.trim().toLowerCase() ?? "";
+  const qDisplay = searchParams.q?.trim() ?? "";
   const status = searchParams.status as DemoRepairStatus | undefined;
   const page = Math.max(1, Number(searchParams.page ?? 1));
   const pageSize = 20;
-  const store = getStore();
 
-  let rows = [...store.repairs];
-  if (status && REPAIR_STATUS_FLOW.includes(status)) {
-    rows = rows.filter((r) => r.status === status);
-  }
-  if (q) {
-    rows = rows.filter((r) => {
-      const customer = store.customers.find((c) => c.id === r.customerId);
-      return (
-        r.jobId.toLowerCase().includes(q) ||
-        (r.imei ?? "").includes(q) ||
-        r.issue.toLowerCase().includes(q) ||
-        (customer?.name.toLowerCase().includes(q) ?? false) ||
-        (customer?.phone.includes(q) ?? false)
-      );
-    });
-  }
-
-  rows.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  const total = rows.length;
+  const validStatus = status && REPAIR_STATUS_FLOW.includes(status) ? status : undefined;
+  const { repairs, total, customerMap } = await queryRepairs({
+    q: qDisplay,
+    status: validStatus,
+    page,
+    pageSize,
+  });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const repairs = rows.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div>
@@ -57,28 +46,24 @@ export default async function RepairsPage({
         </Button>
       </div>
 
-      <form className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        <Input name="q" placeholder="Search…" defaultValue={searchParams.q ?? ""} className="h-11 flex-1 text-base sm:max-w-sm" />
-        <select
-          name="status"
-          defaultValue={status ?? ""}
-          className="h-11 rounded-2xl border border-navy/10 bg-white px-3 text-sm dark:border-white/10 dark:bg-navy-800"
-        >
-          <option value="">All statuses</option>
-          {REPAIR_STATUS_FLOW.map((s) => (
-            <option key={s} value={s}>
-              {REPAIR_STATUS_LABELS[s]}
-            </option>
-          ))}
-        </select>
-        <Button type="submit" variant="outline" className="h-11">
-          Filter
-        </Button>
-      </form>
+      <Suspense fallback={<div className="mt-4 h-11 animate-pulse rounded-2xl bg-white dark:bg-navy-800" />}>
+        <AdminSearchBar
+          placeholder="Search job, name, phone…"
+          selects={[
+            {
+              name: "status",
+              options: [
+                { value: "", label: "All statuses" },
+                ...REPAIR_STATUS_FLOW.map((s) => ({ value: s, label: REPAIR_STATUS_LABELS[s] })),
+              ],
+            },
+          ]}
+        />
+      </Suspense>
 
       <ul className="mt-4 space-y-2 md:hidden">
         {repairs.map((r) => {
-          const customer = store.customers.find((c) => c.id === r.customerId)!;
+          const customer = customerMap.get(r.customerId)!;
           return (
             <li key={r.id}>
               <Link
@@ -94,11 +79,13 @@ export default async function RepairsPage({
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-navy dark:text-white">{r.issue}</p>
-                  <p className="truncate text-xs text-muted">
-                    {customer.name} · {customer.phone}
+                  <p className="truncate font-medium text-navy dark:text-white">
+                    {highlightSequentialMatch(r.issue, qDisplay)}
                   </p>
-                  <p className="mt-1 font-mono text-[11px] text-muted">{r.jobId}</p>
+                  <p className="truncate text-xs text-muted">
+                    {highlightSequentialMatch(customer.name, qDisplay)} · {highlightSequentialMatch(customer.phone, qDisplay)}
+                  </p>
+                  <p className="mt-1 font-mono text-[11px] text-muted">{highlightSequentialMatch(r.jobId, qDisplay)}</p>
                 </div>
                 <JobStatusBadge status={r.status} />
               </Link>
@@ -113,21 +100,21 @@ export default async function RepairsPage({
       <div className="mt-6 hidden md:block">
         <DataTable columns={["Job ID", "Customer", "Issue", "Status", "Amount", "Date", ""]} empty={repairs.length === 0}>
           {repairs.map((r) => {
-            const customer = store.customers.find((c) => c.id === r.customerId)!;
+            const customer = customerMap.get(r.customerId)!;
             return (
               <tr key={r.id} className="border-t border-navy/5 dark:border-white/10">
-                <td className="px-4 py-3 font-mono text-xs">{r.jobId}</td>
+                <td className="px-4 py-3 font-mono text-xs">{highlightSequentialMatch(r.jobId, qDisplay)}</td>
                 <td className="px-4 py-3">
                   <Link href={`/customers/${customer.id}`} className="font-medium text-navy hover:text-accent dark:text-white">
-                    {customer.name}
+                    {highlightSequentialMatch(customer.name, qDisplay)}
                   </Link>
-                  <p className="text-xs text-muted">{customer.phone}</p>
+                  <p className="text-xs text-muted">{highlightSequentialMatch(customer.phone, qDisplay)}</p>
                 </td>
-                <td className="px-4 py-3 text-muted">{r.issue}</td>
+                <td className="px-4 py-3 text-muted">{highlightSequentialMatch(r.issue, qDisplay)}</td>
                 <td className="px-4 py-3">
                   <JobStatusBadge status={r.status} />
                 </td>
-                <td className="px-4 py-3 text-muted">{r.amount != null ? formatINR(r.amount) : "—"}</td>
+                <td className="px-4 py-3 text-muted">{r.amount != null ? formatINR(r.amount) : "N/A"}</td>
                 <td className="px-4 py-3 text-muted">{format(r.createdAt, "dd MMM yyyy")}</td>
                 <td className="px-4 py-3 text-right">
                   <Link href={`/repairs/${r.id}`} className="text-sm text-accent">

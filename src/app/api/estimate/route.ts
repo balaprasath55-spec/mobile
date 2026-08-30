@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStore } from "@/lib/demo-store";
+import { getEstimate } from "@/lib/db";
 import { estimateQuerySchema } from "@/lib/validators";
 
 export const dynamic = "force-dynamic";
@@ -13,13 +13,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const estimate = getStore().estimates.find(
-    (e) =>
-      e.modelId === parsed.data.modelId &&
-      e.issueId === parsed.data.issueId &&
-      e.isActive
-  );
-
+  const estimate = await getEstimate(parsed.data.modelId, parsed.data.issueId);
   if (!estimate) {
     return NextResponse.json({ error: "Estimate not found" }, { status: 404 });
   }

@@ -3,7 +3,8 @@ import { format } from "date-fns";
 import { DataTable, Pagination } from "@/components/admin/data-table";
 import { EnquiryActions } from "@/components/admin/enquiry-actions";
 import { Button } from "@/components/ui/button";
-import { getStore, type DemoEnquiryStatus } from "@/lib/demo-store";
+import { listEnquiries } from "@/lib/db";
+import type { DemoEnquiryStatus } from "@/lib/demo-store";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Enquiries" };
@@ -18,14 +19,8 @@ export default async function EnquiriesAdminPage({
   const status = searchParams.status as DemoEnquiryStatus | undefined;
   const page = Math.max(1, Number(searchParams.page ?? 1));
   const pageSize = 20;
-  const store = getStore();
 
-  let rows = [...store.enquiries];
-  if (status && statuses.includes(status)) {
-    rows = rows.filter((e) => e.status === status);
-  }
-  rows.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
+  const rows = await listEnquiries(status && statuses.includes(status) ? status : undefined);
   const total = rows.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const enquiries = rows.slice((page - 1) * pageSize, page * pageSize);
@@ -66,7 +61,7 @@ export default async function EnquiriesAdminPage({
                 <a href={`tel:${e.phone}`} className="text-sm text-accent">
                   {e.phone}
                 </a>
-                <p className="mt-1 text-sm text-navy dark:text-white">{e.issue || "—"}</p>
+                <p className="mt-1 text-sm text-navy dark:text-white">{e.issue || "N/A"}</p>
                 <p className="text-xs text-muted">
                   {e.device || "Device n/a"} · {format(e.createdAt, "dd MMM HH:mm")}
                 </p>
@@ -93,8 +88,8 @@ export default async function EnquiriesAdminPage({
               <td className="px-4 py-3 font-medium text-navy dark:text-white">{e.name}</td>
               <td className="px-4 py-3 text-muted">{e.phone}</td>
               <td className="px-4 py-3 text-sm text-muted">
-                <p>{e.device || "—"}</p>
-                <p className="text-navy dark:text-white">{e.issue || e.message || "—"}</p>
+                <p>{e.device || "N/A"}</p>
+                <p className="text-navy dark:text-white">{e.issue || e.message || "N/A"}</p>
               </td>
               <td className="px-4 py-3">
                 <span className="rounded-full bg-surface px-2 py-0.5 text-xs dark:bg-navy-900">{e.status}</span>

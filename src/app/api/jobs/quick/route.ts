@@ -4,9 +4,9 @@ import { requireAdmin } from "@/lib/api-auth";
 import {
   createCustomer,
   createRepair,
-  getStore,
+  findCustomerByPhone,
   writeAudit,
-} from "@/lib/demo-store";
+} from "@/lib/db";
 
 const quickJobSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -31,22 +31,25 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const parsed = quickJobSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const first =
+      Object.values(parsed.error.flatten().fieldErrors).flat().find(Boolean) ||
+      parsed.error.flatten().formErrors[0] ||
+      "Invalid input";
+    return NextResponse.json({ error: first }, { status: 400 });
   }
 
   const phone = parsed.data.phone.replace(/\s+/g, "");
-  const store = getStore();
-  let customer = store.customers.find((c) => c.phone === phone);
+  let customer = await findCustomerByPhone(phone);
 
   if (!customer) {
-    customer = createCustomer({
+    customer = await createCustomer({
       name: parsed.data.name,
       phone,
       altPhone: null,
       address: null,
       location: parsed.data.location || null,
     });
-    writeAudit({
+    await writeAudit({
       adminUserId: auth.userId,
       action: "CREATE",
       entityType: "Customer",
@@ -55,7 +58,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const repair = createRepair({
+  const repair = await createRepair({
     customerId: customer.id,
     modelId: parsed.data.modelId || null,
     deviceBrandRaw: parsed.data.deviceBrandRaw || null,
@@ -65,13 +68,12 @@ export async function POST(req: NextRequest) {
     technicianId: null,
     amount: parsed.data.amount ?? null,
     advancePaid: 0,
-    warrantyDays: null,
     notes: parsed.data.notes || null,
     deliveryDate: null,
     imageUrl: parsed.data.imageUrl,
   });
 
-  writeAudit({
+  await writeAudit({
     adminUserId: auth.userId,
     action: "CREATE",
     entityType: "Repair",

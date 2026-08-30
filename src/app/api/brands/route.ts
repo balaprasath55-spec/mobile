@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { getStore } from "@/lib/demo-store";
+import { listBrands } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const brands = getStore()
-    .brands.filter((b) => b.isActive)
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map(({ id, name }) => ({ id, name }));
-  return NextResponse.json({ brands });
+  const brands = await listBrands();
+  return NextResponse.json({ brands: brands.map(({ id, name }) => ({ id, name })) });
 }

@@ -3,23 +3,33 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { Plus, Phone, ClipboardList, Inbox } from "lucide-react";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
-import { LocalRecentJobs } from "@/components/admin/local-recent-jobs";
 import { Button } from "@/components/ui/button";
 import { DEMO_LOGIN } from "@/lib/demo-auth";
-import { getStore } from "@/lib/demo-store";
+import {
+  countCustomers,
+  countEnquiries,
+  countRepairs,
+  getCustomerById,
+  getRecentRepairs,
+} from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
-  const store = getStore();
-  const pending = store.repairs.filter((r) =>
-    ["RECEIVED", "DIAGNOSED", "IN_REPAIR", "QUALITY_CHECK", "READY_FOR_DELIVERY"].includes(r.status)
-  ).length;
-  const newEnquiries = store.enquiries.filter((e) => e.status === "NEW").length;
-  const recent = [...store.repairs]
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 6);
+  const pending = await countRepairs({
+    status: ["RECEIVED", "DIAGNOSED", "IN_REPAIR", "QUALITY_CHECK", "READY_FOR_DELIVERY"],
+  });
+  const newEnquiries = await countEnquiries("NEW");
+  const customerCount = await countCustomers();
+  const recent = await getRecentRepairs(6);
+
+  const recentWithCustomers = await Promise.all(
+    recent.map(async (r) => ({
+      repair: r,
+      customer: await getCustomerById(r.customerId),
+    }))
+  );
 
   return (
     <div className="space-y-5">
@@ -60,42 +70,39 @@ export default async function DashboardPage() {
           className="rounded-2xl bg-white p-3 text-center soft-shadow dark:bg-navy-800"
         >
           <Phone className="mx-auto h-5 w-5 text-accent" />
-          <p className="mt-1 font-display text-xl font-semibold text-navy dark:text-white">
-            {store.customers.length}
-          </p>
+          <p className="mt-1 font-display text-xl font-semibold text-navy dark:text-white">{customerCount}</p>
           <p className="text-[11px] text-muted">Customers</p>
         </Link>
       </div>
 
-      <LocalRecentJobs />
-
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-navy dark:text-white">Sample jobs</h2>
+          <h2 className="text-sm font-semibold text-navy dark:text-white">Recent jobs</h2>
           <Button asChild size="sm" variant="ghost">
             <Link href="/repairs">See all</Link>
           </Button>
         </div>
         <ul className="space-y-2">
-          {recent.map((r) => {
-            const customer = store.customers.find((c) => c.id === r.customerId);
-            return (
-              <li key={r.id}>
-                <Link
-                  href={`/repairs/${r.id}`}
-                  className="flex items-center gap-3 rounded-2xl bg-white p-3 soft-shadow active:bg-surface dark:bg-navy-800"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-navy dark:text-white">{r.issue}</p>
-                    <p className="truncate text-xs text-muted">
-                      {customer?.name} · {customer?.phone} · {format(r.createdAt, "dd MMM")}
-                    </p>
-                  </div>
-                  <JobStatusBadge status={r.status} />
-                </Link>
-              </li>
-            );
-          })}
+          {recentWithCustomers.map(({ repair: r, customer }) => (
+            <li key={r.id}>
+              <Link
+                href={`/repairs/${r.id}`}
+                className="flex items-center gap-3 rounded-2xl bg-white p-3 soft-shadow active:bg-surface dark:bg-navy-800"
+              >
+                {r.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={r.imageUrl} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-navy dark:text-white">{r.issue}</p>
+                  <p className="truncate text-xs text-muted">
+                    {customer?.name} · {customer?.phone} · {format(r.createdAt, "dd MMM")}
+                  </p>
+                </div>
+                <JobStatusBadge status={r.status} />
+              </Link>
+            </li>
+          ))}
           {recent.length === 0 ? (
             <li className="rounded-2xl bg-white p-6 text-center text-sm text-muted dark:bg-navy-800">
               No jobs yet. Tap <strong>New job</strong> to start.

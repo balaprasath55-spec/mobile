@@ -6,7 +6,7 @@ import { SITE } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "FAQ",
-  description: "Frequently asked questions about repairs, warranty, and courier service.",
+  description: "Frequently asked questions about repairs and courier service.",
   alternates: { canonical: "/faq" },
 };
 

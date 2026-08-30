@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { PrintButton } from "@/components/admin/print-button";
-import { getStore } from "@/lib/demo-store";
+import { getCustomerById, getRepairsForCustomer } from "@/lib/db";
 import { SITE, formatINR } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -15,15 +15,14 @@ export default async function PrintReceiptPage({
   params: { id: string };
   searchParams: { jobId?: string };
 }) {
-  const store = getStore();
-  const customer = store.customers.find((c) => c.id === params.id);
+  const customer = await getCustomerById(params.id);
   if (!customer) notFound();
 
-  const repairs = store.repairs
-    .filter((r) => r.customerId === customer.id)
-    .filter((r) => (searchParams.jobId ? r.id === searchParams.jobId : true))
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, searchParams.jobId ? 1 : 5);
+  let repairs = await getRepairsForCustomer(customer.id);
+  if (searchParams.jobId) {
+    repairs = repairs.filter((r) => r.id === searchParams.jobId);
+  }
+  repairs = repairs.slice(0, searchParams.jobId ? 1 : 5);
 
   return (
     <div className="mx-auto max-w-2xl bg-white p-8 text-ink print:p-0">
@@ -48,7 +47,7 @@ export default async function PrintReceiptPage({
         </div>
         <div>
           <dt className="text-muted">Location</dt>
-          <dd>{customer.location ?? "—"}</dd>
+          <dd>{customer.location ?? "N/A"}</dd>
         </div>
         <div>
           <dt className="text-muted">Printed</dt>
@@ -71,15 +70,13 @@ export default async function PrintReceiptPage({
               <td className="py-2 font-mono text-xs">{r.jobId}</td>
               <td className="py-2">{r.issue}</td>
               <td className="py-2">{r.status.replaceAll("_", " ")}</td>
-              <td className="py-2 text-right">{r.amount != null ? formatINR(r.amount) : "—"}</td>
+              <td className="py-2 text-right">{r.amount != null ? formatINR(r.amount) : "N/A"}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <p className="mt-8 text-xs text-muted">
-        Demo receipt · Warranty as noted on job card. Thank you for choosing {SITE.name}.
-      </p>
+      <p className="mt-8 text-xs text-muted">Thank you for choosing {SITE.name}.</p>
     </div>
   );
 }

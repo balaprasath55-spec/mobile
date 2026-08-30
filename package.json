@@ -11,6 +11,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:mongo": "tsx scripts/seed-mongodb.ts",
     "db:studio": "prisma studio"
   },
   "prisma": {
@@ -34,6 +35,7 @@
     "framer-motion": "^12.43.0",
     "fuse.js": "^7.5.0",
     "lucide-react": "^1.28.0",
+    "mongoose": "^9.9.4",
     "next": "14.2.35",
     "next-auth": "^4.24.15",
     "react": "^18",
@@ -48,6 +50,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "dotenv": "^17.4.2",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",

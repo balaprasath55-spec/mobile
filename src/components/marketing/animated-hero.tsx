@@ -45,7 +45,7 @@ export function AnimatedHero() {
               initial={reduce ? false : { opacity: 0, y: 28 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.08, ease: motionEase }}
-              className="mt-5 font-display text-[2rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl md:mt-6 md:text-6xl lg:text-7xl"
+              className="mt-5 font-display text-[2rem] font-semibold tracking-tight sm:text-5xl md:mt-6 md:text-6xl lg:text-7xl"
             >
               Expert care for
               <span className="block bg-gradient-to-r from-white via-accent-200 to-sky-300 bg-clip-text text-transparent">
@@ -59,7 +59,7 @@ export function AnimatedHero() {
               transition={{ duration: 0.55, delay: 0.18, ease: motionEase }}
               className="mt-5 max-w-lg text-base leading-relaxed text-white/70 md:text-lg"
             >
-              Premium iPhone, iPad & Android repair — genuine-quality parts, transparent pricing,
+              Premium iPhone, iPad & Android repair with genuine-quality parts, transparent pricing,
               same-day turnaround, and all-India courier service.
             </motion.p>
 

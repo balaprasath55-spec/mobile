@@ -13,7 +13,6 @@ export default function TermsPage() {
       <SectionHeading title="Terms of Service" subtitle={`Service terms for ${SITE.name}.`} />
       <div className="max-w-3xl space-y-4 text-sm leading-relaxed text-muted">
         <p>Estimates are indicative until diagnosis is complete. Work begins only after your approval.</p>
-        <p>Warranty covers parts and workmanship for the stated period; physical/liquid damage after repair is excluded.</p>
         <p>Devices left unclaimed beyond 90 days may incur storage fees as communicated at intake.</p>
       </div>
     </Section>

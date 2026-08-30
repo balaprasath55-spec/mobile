@@ -35,6 +35,12 @@ body {
   }
 }
 
+@layer base {
+  .font-display {
+    line-height: 1.35;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

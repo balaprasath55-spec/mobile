@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStore } from "@/lib/demo-store";
+import { createCourseNotify } from "@/lib/db";
 import { courseNotifySchema } from "@/lib/validators";
 
 export async function POST(req: NextRequest) {
@@ -9,12 +9,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const row = {
-    id: `course_${Math.random().toString(36).slice(2, 10)}`,
+  const id = await createCourseNotify({
     name: parsed.data.name,
     contact: parsed.data.contact,
-    createdAt: new Date(),
-  };
-  getStore().courseNotifies.unshift(row);
-  return NextResponse.json({ id: row.id, ok: true }, { status: 201 });
+  });
+  return NextResponse.json({ id, ok: true }, { status: 201 });
 }

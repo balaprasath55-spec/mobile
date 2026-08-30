@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { DeleteConfirmButton } from "@/components/admin/delete-confirm-button";
 import { Button } from "@/components/ui/button";
 
 export function EnquiryActions({ id, status }: { id: string; status: string }) {
@@ -55,6 +56,13 @@ export function EnquiryActions({ id, status }: { id: string; status: string }) {
           Close
         </Button>
       ) : null}
+      <DeleteConfirmButton
+        url={`/api/enquiries/${id}`}
+        confirmMessage="Delete this enquiry permanently? This cannot be undone."
+        label="Delete"
+        variant="ghost"
+        className="min-h-10"
+      />
     </div>
   );
 }

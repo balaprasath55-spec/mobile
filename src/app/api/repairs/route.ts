@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/api-auth";
 import {
   createRepair,
+  getCustomerById,
   getModelWithBrand,
-  getStore,
+  queryRepairs,
   writeAudit,
-  type DemoRepairStatus,
-} from "@/lib/demo-store";
+} from "@/lib/db";
+import type { DemoRepairStatus } from "@/lib/demo-store";
 import { emptyToNull } from "@/lib/repairs";
 import { repairSchema } from "@/lib/validators";
 
@@ -14,46 +15,34 @@ export async function GET(req: NextRequest) {
   await requireAdmin();
 
   const sp = req.nextUrl.searchParams;
-  const q = sp.get("q")?.trim().toLowerCase() ?? "";
+  const q = sp.get("q")?.trim() ?? "";
   const status = sp.get("status") as DemoRepairStatus | null;
-  const customerId = sp.get("customerId");
+  const customerId = sp.get("customerId") ?? undefined;
   const page = Math.max(1, Number(sp.get("page") ?? 1));
   const pageSize = Math.min(50, Math.max(1, Number(sp.get("pageSize") ?? 20)));
 
-  const store = getStore();
-  let rows = [...store.repairs];
-
-  if (customerId) rows = rows.filter((r) => r.customerId === customerId);
-  if (status) rows = rows.filter((r) => r.status === status);
-  if (q) {
-    rows = rows.filter((r) => {
-      const customer = store.customers.find((c) => c.id === r.customerId);
-      return (
-        r.jobId.toLowerCase().includes(q) ||
-        (r.imei ?? "").includes(q) ||
-        r.issue.toLowerCase().includes(q) ||
-        (r.deviceModelRaw ?? "").toLowerCase().includes(q) ||
-        (r.deviceBrandRaw ?? "").toLowerCase().includes(q) ||
-        (customer?.name.toLowerCase().includes(q) ?? false) ||
-        (customer?.phone.includes(q) ?? false)
-      );
-    });
-  }
-
-  rows.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  const total = rows.length;
-  const repairs = rows.slice((page - 1) * pageSize, page * pageSize).map((r) => {
-    const customer = store.customers.find((c) => c.id === r.customerId)!;
-    return {
-      ...r,
-      customer: { id: customer.id, name: customer.name, phone: customer.phone },
-      model: getModelWithBrand(r.modelId),
-      technician: null,
-    };
+  const { repairs, total, customerMap } = await queryRepairs({
+    q,
+    status: status ?? undefined,
+    customerId,
+    page,
+    pageSize,
   });
 
+  const enriched = await Promise.all(
+    repairs.map(async (r) => {
+      const customer = customerMap.get(r.customerId)!;
+      return {
+        ...r,
+        customer: { id: customer.id, name: customer.name, phone: customer.phone },
+        model: await getModelWithBrand(r.modelId),
+        technician: null,
+      };
+    })
+  );
+
   return NextResponse.json({
-    repairs,
+    repairs: enriched,
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) || 1 },
   });
 }
@@ -67,11 +56,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const store = getStore();
-  const customer = store.customers.find((c) => c.id === parsed.data.customerId);
+  const customer = await getCustomerById(parsed.data.customerId);
   if (!customer) return NextResponse.json({ error: "Customer not found" }, { status: 404 });
 
-  const repair = createRepair({
+  const repair = await createRepair({
     customerId: parsed.data.customerId,
     modelId: emptyToNull(parsed.data.modelId),
     deviceBrandRaw: emptyToNull(parsed.data.deviceBrandRaw),
@@ -81,12 +69,11 @@ export async function POST(req: NextRequest) {
     technicianId: emptyToNull(parsed.data.technicianId),
     amount: parsed.data.amount ?? null,
     advancePaid: parsed.data.advancePaid ?? 0,
-    warrantyDays: parsed.data.warrantyDays ?? null,
     notes: emptyToNull(parsed.data.notes),
     deliveryDate: parsed.data.deliveryDate ? new Date(parsed.data.deliveryDate) : null,
   });
 
-  writeAudit({
+  await writeAudit({
     adminUserId: auth.userId,
     action: "CREATE",
     entityType: "Repair",

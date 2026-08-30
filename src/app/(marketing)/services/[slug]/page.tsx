@@ -55,29 +55,20 @@ export default function ServiceDetailPage({ params }: Props) {
               <Link href="/pricing">Get estimate</Link>
             </Button>
           </div>
-          <dl className="mt-8 grid max-w-md grid-cols-2 gap-3 text-sm sm:gap-4">
+          <dl className="mt-8 grid max-w-xs gap-3 text-sm sm:gap-4">
             <div className="rounded-2xl bg-surface p-4 dark:bg-navy-800">
               <dt className="text-muted">Turnaround</dt>
               <dd className="mt-1 font-semibold text-navy dark:text-white">{service.turnaround}</dd>
-            </div>
-            <div className="rounded-2xl bg-surface p-4 dark:bg-navy-800">
-              <dt className="text-muted">Warranty</dt>
-              <dd className="mt-1 font-semibold text-navy dark:text-white">{service.warranty}</dd>
             </div>
           </dl>
         </Section>
 
         <Section className="bg-surface dark:bg-navy-900/50">
-          <SectionHeading title="Process" subtitle="Diagnosis → quote → repair → quality check → delivery." />
+          <SectionHeading title="Process" subtitle="Diagnosis, quote, repair, quality check, then delivery." />
           <BeforeAfterSlider beforeLabel="" afterLabel="" />
         </Section>
 
         <Section>
-          <SectionHeading title="Warranty terms" />
-          <p className="max-w-2xl text-muted">
-            Parts and workmanship are covered for the stated period. Physical damage, liquid ingress after repair,
-            and software issues unrelated to the job are excluded. Keep your warranty card.
-          </p>
           <div className="mt-10">
             <SectionHeading title="FAQ" />
             <Accordion type="single" collapsible className="max-w-2xl">

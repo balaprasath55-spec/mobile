@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/api-auth";
 import {
   deleteCustomer,
+  getCustomerById,
   getModelWithBrand,
-  getStore,
+  getRepairsForCustomer,
   updateCustomer,
   writeAudit,
-} from "@/lib/demo-store";
+} from "@/lib/db";
 import { emptyToNull } from "@/lib/repairs";
 import { customerSchema } from "@/lib/validators";
 
@@ -15,20 +16,19 @@ type Ctx = { params: { id: string } };
 export async function GET(_req: NextRequest, { params }: Ctx) {
   await requireAdmin();
 
-  const store = getStore();
-  const customer = store.customers.find((c) => c.id === params.id);
+  const customer = await getCustomerById(params.id);
   if (!customer) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const repairs = store.repairs
-    .filter((r) => r.customerId === params.id)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .map((r) => ({
+  const repairs = await getRepairsForCustomer(params.id);
+  const withModels = await Promise.all(
+    repairs.map(async (r) => ({
       ...r,
-      model: getModelWithBrand(r.modelId),
+      model: await getModelWithBrand(r.modelId),
       technician: null,
-    }));
+    }))
+  );
 
-  return NextResponse.json({ customer: { ...customer, repairs } });
+  return NextResponse.json({ customer: { ...customer, repairs: withModels } });
 }
 
 export async function PUT(req: NextRequest, { params }: Ctx) {
@@ -40,7 +40,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const customer = updateCustomer(params.id, {
+  const customer = await updateCustomer(params.id, {
     name: parsed.data.name,
     phone: parsed.data.phone.replace(/\s+/g, ""),
     altPhone: emptyToNull(parsed.data.altPhone),
@@ -50,7 +50,7 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
 
   if (!customer) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  writeAudit({
+  await writeAudit({
     adminUserId: auth.userId,
     action: "UPDATE",
     entityType: "Customer",
@@ -61,27 +61,31 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   return NextResponse.json({ customer });
 }
 
-export async function DELETE(_req: NextRequest, { params }: Ctx) {
+export async function DELETE(req: NextRequest, { params }: Ctx) {
   const auth = await requireAdmin("ADMIN");
 
-  const store = getStore();
-  const existing = store.customers.find((c) => c.id === params.id);
+  const cascade = req.nextUrl.searchParams.get("cascade") === "true";
+  const existing = await getCustomerById(params.id);
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const ok = deleteCustomer(params.id);
+  const ok = await deleteCustomer(params.id, cascade);
   if (!ok) {
     return NextResponse.json(
-      { error: "Cannot delete customer with repair history." },
+      {
+        error: cascade
+          ? "Could not delete customer."
+          : "This customer has repair jobs. Confirm again to delete the customer and all their jobs.",
+      },
       { status: 400 }
     );
   }
 
-  writeAudit({
+  await writeAudit({
     adminUserId: auth.userId,
     action: "DELETE",
     entityType: "Customer",
     entityId: params.id,
-    changes: { name: existing.name, phone: existing.phone },
+    changes: { name: existing.name, phone: existing.phone, cascade },
   });
 
   return NextResponse.json({ ok: true });

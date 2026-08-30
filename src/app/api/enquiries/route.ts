@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/api-auth";
-import { createEnquiry, getStore } from "@/lib/demo-store";
+import { createEnquiry, listEnquiries } from "@/lib/db";
 import { enquirySchema } from "@/lib/validators";
 
 export async function POST(req: NextRequest) {
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const enquiry = createEnquiry({
+    const enquiry = await createEnquiry({
       name: parsed.data.name,
       phone: parsed.data.phone,
       device: parsed.data.device || null,
@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   await requireAdmin();
-
-  const enquiries = getStore().enquiries;
+  const enquiries = await listEnquiries();
   return NextResponse.json({ enquiries });
 }

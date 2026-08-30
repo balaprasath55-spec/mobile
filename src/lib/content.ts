@@ -6,7 +6,6 @@ export const services = [
     description:
       "Cracked, dead, or flickering displays fixed with genuine-quality panels. We calibrate colour, brightness, and True Tone where supported.",
     icon: "Smartphone",
-    warranty: "90 days",
     turnaround: "30–90 mins",
   },
   {
@@ -16,7 +15,6 @@ export const services = [
     description:
       "Swollen or weak batteries replaced safely. We recycle old cells responsibly and reseal devices to factory standards.",
     icon: "Battery",
-    warranty: "180 days",
     turnaround: "45–60 mins",
   },
   {
@@ -24,9 +22,8 @@ export const services = [
     title: "Back Glass",
     summary: "Laser-assisted back glass repair without disturbing internals.",
     description:
-      "Precision back glass replacement for iPhone and flagship Android devices — clean finish, wireless charging preserved.",
+      "Precision back glass replacement for iPhone and flagship Android devices, with a clean finish and wireless charging preserved.",
     icon: "Layers",
-    warranty: "90 days",
     turnaround: "1–2 hrs",
   },
   {
@@ -36,7 +33,6 @@ export const services = [
     description:
       "Liquid damage recovery, power IC repair, and board-level diagnostics by specialists with microsoldering stations.",
     icon: "Cpu",
-    warranty: "30–90 days",
     turnaround: "1–5 days",
   },
   {
@@ -44,9 +40,8 @@ export const services = [
     title: "iPhone & iPad Specialist",
     summary: "Face ID, True Tone, and Apple-ecosystem repairs done right.",
     description:
-      "Dedicated Apple workflow for Face ID, charging ports, cameras, and iPad digitizers — with data safety first.",
+      "Dedicated Apple workflow for Face ID, charging ports, cameras, and iPad digitizers, with data safety first.",
     icon: "Tablet",
-    warranty: "90 days",
     turnaround: "Same day",
   },
   {
@@ -56,7 +51,6 @@ export const services = [
     description:
       "Ship your device from anywhere in India. Tracked logistics, photo documentation, and insured return shipping.",
     icon: "Truck",
-    warranty: "As per repair",
     turnaround: "3–7 days",
   },
 ] as const;
@@ -71,7 +65,7 @@ export const faqs = [
       },
       {
         q: "Do you use genuine parts?",
-        a: "We offer OEM-grade and genuine-quality options. We always explain the difference and warranty before starting work.",
+        a: "We offer OEM-grade and genuine-quality options. We always explain the difference and pricing before starting work.",
       },
       {
         q: "Is my data safe during repair?",
@@ -80,15 +74,11 @@ export const faqs = [
     ],
   },
   {
-    category: "Pricing & Warranty",
+    category: "Pricing",
     items: [
       {
         q: "Are estimates free?",
         a: "Yes. Use our online price estimator or walk in for a free diagnosis. Final quotes are confirmed after inspection.",
-      },
-      {
-        q: "What warranty do you provide?",
-        a: "Most repairs include 30–180 days warranty covering parts and workmanship. Water damage repairs have limited coverage.",
       },
     ],
   },
@@ -127,21 +117,21 @@ export const testimonials = [
     location: "George Town",
     rating: 4,
     source: "Justdial",
-    text: "Came for screen repair — quality check was thorough. Shop gets crowded but workmanship is solid.",
+    text: "Came for screen repair. Quality check was thorough. Shop gets crowded but workmanship is solid.",
   },
   {
     name: "Meena L.",
     location: "Courier · Madurai",
     rating: 5,
     source: "Google",
-    text: "All-India courier option worked well. Regular updates and phone returned working with warranty.",
+    text: "All-India courier option worked well. Regular updates and phone returned working perfectly.",
   },
   {
     name: "Praveen S.",
     location: "Mannadi",
     rating: 5,
     source: "Justdial",
-    text: "Best quality service for the price. Battery and display work done carefully — recommended.",
+    text: "Best quality service for the price. Battery and display work done carefully. Recommended.",
   },
   {
     name: "Nisha A.",
@@ -197,7 +187,7 @@ export const socialLinks = {
 export const youtubeVideos = [
   {
     id: "H8xfI8apMTc",
-    title: "iPhone 17 Pro Max glass repair — save money",
+    title: "iPhone 17 Pro Max glass repair: save money",
   },
   {
     id: "MeHEWIzp0v0",
@@ -217,7 +207,7 @@ export const youtubeVideos = [
   },
   {
     id: "7UGDkMYe8oE",
-    title: "Mobilia Live Expo 2026 — full visit review",
+    title: "Mobilia Live Expo 2026: full visit review",
   },
 ] as const;
 
@@ -226,5 +216,5 @@ export const processSteps = [
   { title: "Quote", desc: "Clear pricing before any work begins" },
   { title: "Repair", desc: "ESD-safe benches and calibrated tools" },
   { title: "Quality check", desc: "Multi-point testing before handover" },
-  { title: "Deliver", desc: "Warranty card and care tips included" },
+  { title: "Deliver", desc: "Care tips and handover checklist included" },
 ] as const;

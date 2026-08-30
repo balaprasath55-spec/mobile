@@ -64,7 +64,7 @@ export default function ContactPage() {
 
         <div>
           <iframe
-            title="MR Mobile Zone map — George Town, Chennai"
+            title="MR Mobile Zone map, George Town, Chennai"
             className="h-72 w-full rounded-2xl soft-shadow sm:h-80 md:h-full md:min-h-[360px]"
             loading="lazy"
             allowFullScreen

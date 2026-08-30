@@ -16,7 +16,7 @@ export default function CourierPage() {
       <Section>
         <SectionHeading
           title="Courier repair, pan-India"
-          subtitle="Secure shipping, photo documentation, and workshop-grade repair — then tracked return."
+          subtitle="Secure shipping, photo documentation, and workshop-grade repair, then tracked return."
         />
         <ol className="grid gap-4 md:grid-cols-5">
           {processSteps.map((s, i) => (
@@ -29,7 +29,7 @@ export default function CourierPage() {
         </ol>
       </Section>
       <Section className="bg-surface dark:bg-navy-900/50">
-        <SectionHeading title="Supported couriers" subtitle="DTDC, Blue Dart, Delhivery, India Post — use your preferred partner." />
+        <SectionHeading title="Supported couriers" subtitle="DTDC, Blue Dart, Delhivery, India Post. Use your preferred partner." />
         <div className="flex flex-wrap gap-3">
           {["DTDC", "Blue Dart", "Delhivery", "India Post"].map((c) => (
             <span key={c} className="rounded-full border border-navy/10 px-4 py-2 text-sm dark:border-white/10">

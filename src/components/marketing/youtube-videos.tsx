@@ -32,7 +32,7 @@ export function YoutubeVideoGrid({ limit = 6 }: { limit?: number }) {
                   <Play className="h-5 w-5 fill-current" />
                 </span>
               </div>
-              <p className="absolute bottom-0 left-0 right-0 p-3 text-sm font-medium leading-snug text-white line-clamp-2">
+              <p className="absolute bottom-0 left-0 right-0 p-3 pb-3.5 text-sm font-medium leading-normal text-white line-clamp-2">
                 {video.title}
               </p>
             </a>

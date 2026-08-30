@@ -7,7 +7,7 @@ import { SITE } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Testimonials",
-  description: "Customer reviews for MR Mobile Zone Service — 4.4 rating from hundreds of Chennai customers.",
+  description: "Customer reviews for MR Mobile Zone Service. 4.4 rating from hundreds of Chennai customers.",
   alternates: { canonical: "/testimonials" },
 };
 

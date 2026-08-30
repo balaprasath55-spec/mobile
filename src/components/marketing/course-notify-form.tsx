@@ -18,7 +18,7 @@ export function CourseNotifyForm() {
       body: JSON.stringify({ name: fd.get("name"), contact: fd.get("contact") }),
     });
     setLoading(false);
-    setMsg(res.ok ? "You’re on the list — we’ll notify you." : "Could not save. Try again.");
+    setMsg(res.ok ? "You’re on the list! We’ll notify you." : "Could not save. Try again.");
     if (res.ok) e.currentTarget.reset();
   }
 

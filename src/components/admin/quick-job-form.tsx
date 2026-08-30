@@ -1,12 +1,12 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Camera, ChevronDown, ImagePlus } from "lucide-react";
 import { BrandModelSelect } from "@/components/admin/brand-model-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createLocalQuickJob } from "@/lib/demo-local";
 import { fileToDataUrl } from "@/lib/image-data-url";
 
 type Props = {
@@ -19,7 +19,20 @@ type Props = {
   };
 };
 
+function formatApiError(data: unknown): string {
+  if (!data || typeof data !== "object") return "Could not save";
+  const err = (data as { error?: unknown }).error;
+  if (typeof err === "string") return err;
+  if (err && typeof err === "object" && "fieldErrors" in err) {
+    const fields = (err as { fieldErrors: Record<string, string[] | undefined> }).fieldErrors;
+    const first = Object.values(fields).flat().find(Boolean);
+    if (first) return first;
+  }
+  return "Could not save";
+}
+
 export function QuickJobForm({ defaults }: Props) {
+  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -47,10 +60,9 @@ export function QuickJobForm({ defaults }: Props) {
     try {
       const imageUrl = await fileToDataUrl(file, 960, 0.6);
       const amountRaw = fd.get("amount");
-      const amount =
-        amountRaw === null || amountRaw === "" ? null : Number(amountRaw);
+      const amount = amountRaw === null || amountRaw === "" ? null : Number(amountRaw);
 
-      const { repair } = createLocalQuickJob({
+      const payload = {
         name: String(fd.get("name") ?? "").trim(),
         phone: String(fd.get("phone") ?? "").trim(),
         issue: String(fd.get("issue") ?? "").trim(),
@@ -61,10 +73,18 @@ export function QuickJobForm({ defaults }: Props) {
         location: String(fd.get("location") ?? ""),
         amount: Number.isFinite(amount as number) ? amount : null,
         notes: String(fd.get("notes") ?? ""),
-      });
+      };
 
-      // Hard nav so the detail page can read localStorage reliably
-      window.location.href = `/repairs/${repair.id}`;
+      const res = await fetch("/api/jobs/quick", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(formatApiError(data));
+
+      router.push(`/repairs/${data.repair.id}`);
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);

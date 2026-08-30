@@ -47,7 +47,6 @@ export const repairSchema = z.object({
   technicianId: z.string().optional().or(z.literal("")),
   amount: z.coerce.number().nonnegative().optional().nullable(),
   advancePaid: z.coerce.number().nonnegative().optional().default(0),
-  warrantyDays: z.coerce.number().int().nonnegative().optional().nullable(),
   notes: z.string().max(2000).optional().or(z.literal("")),
   deliveryDate: z.string().optional().or(z.literal("")),
 });

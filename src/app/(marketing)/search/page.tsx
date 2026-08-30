@@ -28,7 +28,7 @@ export default function SearchPage() {
       <Input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Try display, courier, warranty…"
+        placeholder="Try display, courier, pricing…"
         className="max-w-xl"
         autoFocus
       />

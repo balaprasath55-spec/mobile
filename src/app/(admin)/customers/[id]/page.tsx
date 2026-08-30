@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { CustomerForm } from "@/components/admin/customer-form";
+import { DeleteCustomerButton } from "@/components/admin/delete-customer-button";
 import { DataTable } from "@/components/admin/data-table";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
 import { Button } from "@/components/ui/button";
-import { getModelWithBrand, getStore } from "@/lib/demo-store";
+import { getCustomerById, getModelWithBrand, getRepairsForCustomer } from "@/lib/db";
 import { formatINR } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -14,18 +15,21 @@ export const dynamic = "force-dynamic";
 type Props = { params: { id: string } };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const c = getStore().customers.find((x) => x.id === params.id);
+  const c = await getCustomerById(params.id);
   return { title: c?.name ? `Customer · ${c.name}` : "Customer" };
 }
 
 export default async function CustomerDetailPage({ params }: Props) {
-  const store = getStore();
-  const customer = store.customers.find((c) => c.id === params.id);
+  const customer = await getCustomerById(params.id);
   if (!customer) notFound();
 
-  const repairs = store.repairs
-    .filter((r) => r.customerId === customer.id)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const repairs = await getRepairsForCustomer(customer.id);
+  const repairsWithModels = await Promise.all(
+    repairs.map(async (r) => ({
+      ...r,
+      model: await getModelWithBrand(r.modelId),
+    }))
+  );
 
   return (
     <div className="space-y-10">
@@ -47,6 +51,11 @@ export default async function CustomerDetailPage({ params }: Props) {
               Print receipt
             </Link>
           </Button>
+          <DeleteCustomerButton
+            customerId={customer.id}
+            customerName={customer.name}
+            repairCount={repairs.length}
+          />
         </div>
       </div>
 
@@ -63,12 +72,11 @@ export default async function CustomerDetailPage({ params }: Props) {
           </Button>
         </div>
         <DataTable columns={["Job ID", "Device", "Issue", "Status", "Amount", "Date", ""]} empty={repairs.length === 0}>
-          {repairs.map((r) => {
-            const model = getModelWithBrand(r.modelId);
+          {repairsWithModels.map((r) => {
             const device =
-              model
-                ? `${model.brand.name} ${model.name}`
-                : [r.deviceBrandRaw, r.deviceModelRaw].filter(Boolean).join(" ") || "—";
+              r.model
+                ? `${r.model.brand.name} ${r.model.name}`
+                : [r.deviceBrandRaw, r.deviceModelRaw].filter(Boolean).join(" ") || "N/A";
             return (
               <tr key={r.id} className="border-t border-navy/5 dark:border-white/10">
                 <td className="px-4 py-3 font-mono text-xs">{r.jobId}</td>
@@ -77,7 +85,7 @@ export default async function CustomerDetailPage({ params }: Props) {
                 <td className="px-4 py-3">
                   <JobStatusBadge status={r.status} />
                 </td>
-                <td className="px-4 py-3 text-muted">{r.amount != null ? formatINR(r.amount) : "—"}</td>
+                <td className="px-4 py-3 text-muted">{r.amount != null ? formatINR(r.amount) : "N/A"}</td>
                 <td className="px-4 py-3 text-muted">{format(r.createdAt, "dd MMM yyyy")}</td>
                 <td className="px-4 py-3 text-right">
                   <Link href={`/repairs/${r.id}`} className="text-sm text-accent">

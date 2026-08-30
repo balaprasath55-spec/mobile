@@ -114,7 +114,6 @@ export function createLocalQuickJob(input: {
     technicianId: null,
     amount: input.amount ?? null,
     advancePaid: 0,
-    warrantyDays: null,
     notes: input.notes?.trim() || null,
     deliveryDate: null,
     deliveredAt: null,

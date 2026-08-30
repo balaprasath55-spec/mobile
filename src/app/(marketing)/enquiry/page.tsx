@@ -61,7 +61,7 @@ function EnquiryForm() {
       }
 
       setStatus("ok");
-      setMessage("Thanks — we’ll contact you shortly.");
+      setMessage("Thanks! We’ll contact you shortly.");
       form.reset();
       onFileChange(null);
       setShowMore(false);
@@ -185,7 +185,7 @@ export default function EnquiryPage() {
     <Section className="py-10 md:py-16">
       <SectionHeading
         title="Repair enquiry"
-        subtitle="Name, phone, issue & photo are enough — we typically reply within a few hours."
+        subtitle="Name, phone, issue and photo are enough. We typically reply within a few hours."
         align="center"
       />
       <Suspense fallback={<div className="mx-auto h-64 max-w-lg animate-pulse rounded-2xl bg-surface" />}>

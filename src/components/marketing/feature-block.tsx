@@ -28,11 +28,11 @@ export function FeatureBlock({
   cta,
   image,
   imageAlt,
-  caption = "Workshop-grade diagnostics · Warranty included",
+  caption = "Workshop-grade diagnostics · Quality assured",
   reverse,
 }: FeatureBlockProps) {
   return (
-    <div className={`grid items-center gap-8 md:grid-cols-2 md:gap-14 ${reverse ? "md:[&>*:first-child]:order-2" : ""}`}>
+    <div className={`grid items-start gap-8 md:grid-cols-2 md:gap-14 ${reverse ? "md:[&>*:first-child]:order-2" : ""}`}>
       <Reveal>
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">{eyebrow}</p>
         <h3 className="mt-3 font-display text-3xl font-semibold text-navy dark:text-white md:text-4xl">{title}</h3>

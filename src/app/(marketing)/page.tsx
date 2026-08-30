@@ -14,32 +14,32 @@ import { StatsCounter } from "@/components/marketing/stats-counter";
 import { YoutubeVideoGrid } from "@/components/marketing/youtube-videos";
 import { Button } from "@/components/ui/button";
 import { SITE } from "@/lib/utils";
-import { getStore } from "@/lib/demo-store";
+import { getRepairCount } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Premium Mobile & Tablet Repair in Chennai",
   description:
-    "MR Mobile Zone Service — trusted display, battery, back glass and motherboard repairs with all-India courier support.",
+    "MR Mobile Zone Service: trusted display, battery, back glass and motherboard repairs with all-India courier support.",
   alternates: { canonical: "/" },
 };
 
-function getRepairCount() {
-  return Math.max(getStore().repairs.length, 18500);
+async function getRepairCountDisplay() {
+  const count = await getRepairCount();
+  return Math.max(count, 18500);
 }
 
 const reasons = [
   "ESD-safe workbenches & calibrated tools",
   "Transparent pricing before any repair",
-  "90–180 day warranties on most jobs",
   "Same-day turnaround for common repairs",
   "Pan-India courier with photo documentation",
   "146k+ community that trusts our work",
 ];
 
 export default async function HomePage() {
-  const devicesRepaired = getRepairCount();
+  const devicesRepaired = await getRepairCountDisplay();
 
   return (
     <>
@@ -64,7 +64,7 @@ export default async function HomePage() {
         <Reveal>
           <SectionHeading
             title="Get the best service for your phone"
-            subtitle="Specialist work for iPhone, Android, tablets and more — genuine-quality parts and clear timelines."
+            subtitle="Specialist work for iPhone, Android, tablets and more, with genuine-quality parts and clear timelines."
             align="center"
           />
         </Reveal>
@@ -102,7 +102,7 @@ export default async function HomePage() {
           <FeatureBlock
             eyebrow="Pan-India"
             title="Courier repair from anywhere"
-            body="Ship securely from any city. We diagnose, repair, and return with tracking — typically 3–7 days end to end."
+            body="Ship securely from any city. We diagnose, repair, and return with tracking, typically in 3–7 days end to end."
             href="/courier"
             cta="Start courier repair"
             image="/features/courier.jpg"
@@ -128,7 +128,7 @@ export default async function HomePage() {
           <Reveal>
             <SectionHeading
               title="Why customers stay with us"
-              subtitle="Technical depth without the chaos. You always know the status, the price, and the warranty."
+              subtitle="Technical depth without the chaos. You always know the status and the price."
             />
             <ul className="space-y-3">
               {reasons.map((r) => (
@@ -167,7 +167,7 @@ export default async function HomePage() {
 
       <Section>
         <Reveal>
-          <SectionHeading title="From the workshop" subtitle="Repair photos — display, battery, board and shop floor." />
+          <SectionHeading title="From the workshop" subtitle="Repair photos from display, battery, board work and the shop floor." />
         </Reveal>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {[
@@ -199,7 +199,7 @@ export default async function HomePage() {
         <Reveal>
           <SectionHeading
             title="Watch our work"
-            subtitle="Repair videos from our YouTube — tap a thumbnail to watch on YouTube."
+            subtitle="Repair videos from our YouTube channel. Tap a thumbnail to watch on YouTube."
           />
         </Reveal>
         <YoutubeVideoGrid limit={6} />
@@ -211,8 +211,8 @@ export default async function HomePage() {
           <Reveal>
             <h2 className="font-display text-3xl font-semibold md:text-4xl">Not in Chennai?</h2>
             <p className="mt-3 max-w-md text-white/70">
-              Our all-India courier repair service brings workshop-grade diagnostics to your doorstep —
-              tracked, insured, documented.
+              Our all-India courier repair service brings workshop-grade diagnostics to your doorstep,
+              with tracked, insured, documented shipping.
             </p>
             <Button asChild className="mt-6 bg-white text-navy hover:bg-white/90" variant="secondary">
               <Link href="/courier">Start courier repair</Link>

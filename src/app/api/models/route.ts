@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStore } from "@/lib/demo-store";
+import { listModels } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -8,9 +8,8 @@ export async function GET(req: NextRequest) {
   if (!brandId) {
     return NextResponse.json({ models: [], error: "brandId required" }, { status: 400 });
   }
-  const models = getStore()
-    .models.filter((m) => m.brandId === brandId && m.isActive)
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map(({ id, name, brandId: b }) => ({ id, name, brandId: b }));
-  return NextResponse.json({ models });
+  const models = await listModels(brandId);
+  return NextResponse.json({
+    models: models.map(({ id, name, brandId: b }) => ({ id, name, brandId: b })),
+  });
 }

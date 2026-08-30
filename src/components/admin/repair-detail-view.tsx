@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { RepairForm } from "@/components/admin/repair-form";
 import { StatusWorkflow } from "@/components/admin/status-workflow";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
+import { DeleteConfirmButton } from "@/components/admin/delete-confirm-button";
 import { Button } from "@/components/ui/button";
 import { getLocalRepairBundle } from "@/lib/demo-local";
 import type { DemoCustomer, DemoRepair } from "@/lib/demo-store";
@@ -42,7 +43,7 @@ export function RepairDetailView({
         <div className="w-full text-left text-sm sm:w-auto sm:text-right">
           <p className="text-muted">Amount</p>
           <p className="font-display text-2xl font-semibold text-navy dark:text-white">
-            {repair.amount != null ? formatINR(repair.amount) : "—"}
+            {repair.amount != null ? formatINR(repair.amount) : "N/A"}
           </p>
           <p className="mt-1 text-muted">Advance {formatINR(repair.advancePaid)}</p>
           <Button asChild size="sm" variant="outline" className="mt-3 w-full sm:w-auto">
@@ -50,6 +51,16 @@ export function RepairDetailView({
               Print receipt
             </Link>
           </Button>
+          {!local ? (
+            <DeleteConfirmButton
+              url={`/api/repairs/${repair.id}`}
+              confirmMessage={`Delete job ${repair.jobId}? This removes it from the database permanently.`}
+              label="Delete job"
+              successRedirect="/repairs"
+              variant="outline"
+              className="mt-2 w-full sm:w-auto"
+            />
+          ) : null}
         </div>
       </div>
 
@@ -81,7 +92,6 @@ export function RepairDetailView({
             imei: repair.imei,
             amount: repair.amount,
             advancePaid: repair.advancePaid,
-            warrantyDays: repair.warrantyDays,
             notes: repair.notes,
           }}
         />

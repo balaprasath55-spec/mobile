@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion, type Variants } from "framer-motion";
-import { motionEase } from "@/lib/utils";
+import { cn, motionEase } from "@/lib/utils";
 
 const defaultVariants: Variants = {
   hidden: { opacity: 0, y: 28 },
@@ -26,12 +26,12 @@ export function Reveal({
   const reduce = useReducedMotion();
 
   if (reduce) {
-    return <div className={className}>{children}</div>;
+    return <div className={cn("overflow-visible", className)}>{children}</div>;
   }
 
   return (
     <motion.div
-      className={className}
+      className={cn("overflow-visible", className)}
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-60px" }}
@@ -55,12 +55,12 @@ export function Stagger({
   const reduce = useReducedMotion();
 
   if (reduce) {
-    return <div className={className}>{children}</div>;
+    return <div className={cn("overflow-visible", className)}>{children}</div>;
   }
 
   return (
     <motion.div
-      className={className}
+      className={cn("overflow-visible", className)}
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-40px" }}
@@ -82,7 +82,7 @@ export function StaggerItem({
   className?: string;
 }) {
   return (
-    <motion.div className={className} variants={defaultVariants}>
+    <motion.div className={cn("overflow-visible", className)} variants={defaultVariants}>
       {children}
     </motion.div>
   );

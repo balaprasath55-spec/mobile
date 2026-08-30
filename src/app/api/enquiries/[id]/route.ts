@@ -3,10 +3,13 @@ import { requireAdmin } from "@/lib/api-auth";
 import {
   createCustomer,
   createRepair,
-  getStore,
+  deleteEnquiry,
+  findCustomerByPhone,
+  getEnquiryById,
+  updateEnquiryStatus,
   writeAudit,
-  type DemoEnquiryStatus,
-} from "@/lib/demo-store";
+} from "@/lib/db";
+import type { DemoEnquiryStatus } from "@/lib/demo-store";
 import { enquiryStatusSchema } from "@/lib/validators";
 
 type Ctx = { params: { id: string } };
@@ -14,7 +17,7 @@ type Ctx = { params: { id: string } };
 export async function GET(_req: NextRequest, { params }: Ctx) {
   await requireAdmin();
 
-  const enquiry = getStore().enquiries.find((e) => e.id === params.id);
+  const enquiry = await getEnquiryById(params.id);
   if (!enquiry) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ enquiry });
 }
@@ -28,42 +31,43 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const store = getStore();
-  const enquiry = store.enquiries.find((e) => e.id === params.id);
+  const enquiry = await getEnquiryById(params.id);
   if (!enquiry) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const from = enquiry.status;
-  enquiry.status = parsed.data.status as DemoEnquiryStatus;
+  const updated = await updateEnquiryStatus(params.id, parsed.data.status as DemoEnquiryStatus);
+  if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  writeAudit({
+  await writeAudit({
     adminUserId: auth.userId,
     action: "STATUS_CHANGE",
     entityType: "Enquiry",
     entityId: params.id,
-    changes: { from, to: enquiry.status },
+    changes: { from, to: updated.status },
   });
 
-  return NextResponse.json({ enquiry });
+  return NextResponse.json({ enquiry: updated });
 }
 
 export async function POST(req: NextRequest, { params }: Ctx) {
   const auth = await requireAdmin();
 
   const body = (await req.json().catch(() => ({}))) as { createJob?: boolean };
-  const store = getStore();
-  const enquiry = store.enquiries.find((e) => e.id === params.id);
+  const enquiry = await getEnquiryById(params.id);
   if (!enquiry) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  let customer = store.customers.find((c) => c.phone === enquiry.phone.replace(/\s+/g, ""));
+  const phone = enquiry.phone.replace(/\s+/g, "");
+  let customer = await findCustomerByPhone(phone);
+
   if (!customer) {
-    customer = createCustomer({
+    customer = await createCustomer({
       name: enquiry.name,
-      phone: enquiry.phone.replace(/\s+/g, ""),
+      phone,
       altPhone: null,
       address: null,
       location: enquiry.location,
     });
-    writeAudit({
+    await writeAudit({
       adminUserId: auth.userId,
       action: "CREATE",
       entityType: "Customer",
@@ -74,7 +78,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
 
   let repair = null;
   if (body.createJob !== false) {
-    repair = createRepair({
+    repair = await createRepair({
       customerId: customer.id,
       modelId: null,
       deviceBrandRaw: null,
@@ -84,12 +88,11 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       technicianId: null,
       amount: null,
       advancePaid: 0,
-      warrantyDays: null,
       notes: enquiry.message,
       deliveryDate: null,
       imageUrl: enquiry.imageUrl,
     });
-    writeAudit({
+    await writeAudit({
       adminUserId: auth.userId,
       action: "CREATE",
       entityType: "Repair",
@@ -98,6 +101,26 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     });
   }
 
-  enquiry.status = "CONVERTED";
-  return NextResponse.json({ customer, repair });
+  const updated = await updateEnquiryStatus(params.id, "CONVERTED");
+  return NextResponse.json({ customer, repair, enquiry: updated });
+}
+
+export async function DELETE(_req: NextRequest, { params }: Ctx) {
+  const auth = await requireAdmin("ADMIN");
+
+  const existing = await getEnquiryById(params.id);
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const ok = await deleteEnquiry(params.id);
+  if (!ok) return NextResponse.json({ error: "Could not delete enquiry." }, { status: 500 });
+
+  await writeAudit({
+    adminUserId: auth.userId,
+    action: "DELETE",
+    entityType: "Enquiry",
+    entityId: params.id,
+    changes: { name: existing.name, phone: existing.phone },
+  });
+
+  return NextResponse.json({ ok: true });
 }

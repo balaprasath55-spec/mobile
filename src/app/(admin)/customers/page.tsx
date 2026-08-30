@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import type { Metadata } from "next";
+import { AdminSearchBar } from "@/components/admin/admin-search-bar";
 import { DataTable, Pagination } from "@/components/admin/data-table";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { getStore } from "@/lib/demo-store";
+import { getRepairsForCustomer, queryCustomers } from "@/lib/db";
+import { usingMemoryFallback } from "@/lib/db/backend";
+import { highlightSequentialMatch } from "@/lib/search-utils";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Customers" };
@@ -14,36 +17,28 @@ export default async function CustomersPage({
 }: {
   searchParams: { q?: string; location?: string; page?: string };
 }) {
-  const q = searchParams.q?.trim().toLowerCase() ?? "";
-  const location = searchParams.location?.trim().toLowerCase() ?? "";
+  const qDisplay = searchParams.q?.trim() ?? "";
+  const location = searchParams.location?.trim() ?? "";
   const page = Math.max(1, Number(searchParams.page ?? 1));
   const pageSize = 20;
-  const store = getStore();
 
-  let rows = [...store.customers];
-  if (q) {
-    rows = rows.filter((c) => {
-      const repairs = store.repairs.filter((r) => r.customerId === c.id);
-      return (
-        c.name.toLowerCase().includes(q) ||
-        c.phone.includes(q) ||
-        (c.location ?? "").toLowerCase().includes(q) ||
-        repairs.some((r) => r.jobId.toLowerCase().includes(q) || (r.imei ?? "").includes(q))
-      );
-    });
-  }
-  if (location) {
-    rows = rows.filter((c) => (c.location ?? "").toLowerCase().includes(location));
-  }
-
-  const total = rows.length;
+  const { customers, total } = await queryCustomers({ q: qDisplay, location, page, pageSize });
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const customers = rows.slice((page - 1) * pageSize, page * pageSize);
+
+  const repairInfo = await Promise.all(
+    customers.map(async (c) => {
+      const repairs = await getRepairsForCustomer(c.id);
+      return { customerId: c.id, repairs, latest: repairs[0] ?? null };
+    })
+  );
+  const repairByCustomer = new Map(repairInfo.map((r) => [r.customerId, r]));
 
   return (
     <div>
       <div className="mb-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-        Demo mode — data resets when the server restarts.
+        {usingMemoryFallback()
+          ? "MongoDB unavailable. Showing local shop data (resets on restart). Check Atlas network access."
+          : "Data stored in MongoDB. Changes persist across restarts."}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -55,19 +50,13 @@ export default async function CustomersPage({
         </Button>
       </div>
 
-      <form className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <Input name="q" placeholder="Search name or phone…" defaultValue={searchParams.q ?? ""} className="h-11 flex-1 text-base" />
-        <Button type="submit" variant="outline" className="h-11">
-          Search
-        </Button>
-      </form>
+      <Suspense fallback={<div className="mt-4 h-11 animate-pulse rounded-2xl bg-white dark:bg-navy-800" />}>
+        <AdminSearchBar placeholder="Search name or phone…" className="sm:max-w-lg" />
+      </Suspense>
 
       <ul className="mt-4 space-y-2 md:hidden">
         {customers.map((c) => {
-          const repairs = store.repairs
-            .filter((r) => r.customerId === c.id)
-            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-          const latest = repairs[0];
+          const info = repairByCustomer.get(c.id)!;
           return (
             <li key={c.id}>
               <Link
@@ -75,13 +64,15 @@ export default async function CustomersPage({
                 className="flex items-center justify-between gap-3 rounded-2xl bg-white p-3 soft-shadow active:bg-surface dark:bg-navy-800"
               >
                 <div className="min-w-0">
-                  <p className="font-medium text-navy dark:text-white">{c.name}</p>
-                  <p className="text-sm text-muted">{c.phone}</p>
-                  {c.location ? <p className="text-xs text-muted">{c.location}</p> : null}
+                  <p className="font-medium text-navy dark:text-white">{highlightSequentialMatch(c.name, qDisplay)}</p>
+                  <p className="text-sm text-muted">{highlightSequentialMatch(c.phone, qDisplay)}</p>
+                  {c.location ? (
+                    <p className="text-xs text-muted">{highlightSequentialMatch(c.location, qDisplay)}</p>
+                  ) : null}
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-xs text-muted">{repairs.length} jobs</p>
-                  {latest ? <JobStatusBadge status={latest.status} /> : null}
+                  <p className="text-xs text-muted">{info.repairs.length} jobs</p>
+                  {info.latest ? <JobStatusBadge status={info.latest.status} /> : null}
                 </div>
               </Link>
             </li>
@@ -95,28 +86,27 @@ export default async function CustomersPage({
       <div className="mt-6 hidden md:block">
         <DataTable columns={["Name", "Phone", "Location", "Jobs", "Latest", ""]} empty={customers.length === 0}>
           {customers.map((c) => {
-            const repairs = store.repairs
-              .filter((r) => r.customerId === c.id)
-              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-            const latest = repairs[0];
+            const info = repairByCustomer.get(c.id)!;
             return (
               <tr key={c.id} className="border-t border-navy/5 dark:border-white/10">
                 <td className="px-4 py-3 font-medium text-navy dark:text-white">
                   <Link href={`/customers/${c.id}`} className="hover:text-accent">
-                    {c.name}
+                    {highlightSequentialMatch(c.name, qDisplay)}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-muted">{c.phone}</td>
-                <td className="px-4 py-3 text-muted">{c.location ?? "—"}</td>
-                <td className="px-4 py-3 text-muted">{repairs.length}</td>
+                <td className="px-4 py-3 text-muted">{highlightSequentialMatch(c.phone, qDisplay)}</td>
+                <td className="px-4 py-3 text-muted">
+                  {c.location ? highlightSequentialMatch(c.location, qDisplay) : "N/A"}
+                </td>
+                <td className="px-4 py-3 text-muted">{info.repairs.length}</td>
                 <td className="px-4 py-3">
-                  {latest ? (
+                  {info.latest ? (
                     <div className="flex flex-col gap-1">
-                      <span className="font-mono text-xs">{latest.jobId}</span>
-                      <JobStatusBadge status={latest.status} />
+                      <span className="font-mono text-xs">{highlightSequentialMatch(info.latest.jobId, qDisplay)}</span>
+                      <JobStatusBadge status={info.latest.status} />
                     </div>
                   ) : (
-                    <span className="text-muted">—</span>
+                    <span className="text-muted">N/A</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">

@@ -12,7 +12,7 @@ const rows = [
   ["Board-level microsoldering", "Yes", "Rare"],
   ["Photo documentation", "Yes", "Uncommon"],
   ["All-India courier workflow", "Yes", "Local only"],
-  ["Warranty on parts & labour", "30–180 days", "Varies / none"],
+  ["Quality testing before handover", "Multi-point QC", "Basic check"],
 ];
 
 export default function WhyUsPage() {
@@ -24,7 +24,7 @@ export default function WhyUsPage() {
       />
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { t: "Specialist depth", d: "Face ID, True Tone, power IC — not just glass swaps." },
+          { t: "Specialist depth", d: "Face ID, True Tone, power IC. Not just glass swaps." },
           { t: "Calm communication", d: "Status updates and clear pricing, every time." },
           { t: "Proven at scale", d: "146k+ Instagram community and 11k+ customer records." },
         ].map((c) => (

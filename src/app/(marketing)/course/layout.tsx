@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Repair Course",
-  description: "Coming soon — MR Mobile Zone repair courses.",
+  description: "Coming soon: MR Mobile Zone repair courses.",
   alternates: { canonical: "/courses" },
 };
 

@@ -1,33 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Section, SectionHeading } from "@/components/marketing/section";
-import { getStore } from "@/lib/demo-store";
+import { listBrands, listModels } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Supported Devices",
-  description: "Browse brands and models we repair — jump straight into the price estimator.",
+  description: "Browse brands and models we repair, and jump straight into the price estimator.",
   alternates: { canonical: "/devices" },
 };
 
-export default function DevicesPage() {
-  const store = getStore();
-  const brands = store.brands
-    .filter((b) => b.isActive)
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map((brand) => ({
+export default async function DevicesPage() {
+  const brandList = await listBrands();
+  const brands = await Promise.all(
+    brandList.map(async (brand) => ({
       ...brand,
-      models: store.models
-        .filter((m) => m.brandId === brand.id && m.isActive)
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    }));
+      models: await listModels(brand.id),
+    }))
+  );
 
   return (
     <Section>
       <SectionHeading
         title="Devices we repair"
-        subtitle="Pick a model to prefill the price estimator. Demo catalogue — no database required."
+        subtitle="Pick a model to prefill the price estimator."
       />
       <div className="space-y-10">
         {brands.map((brand) => (

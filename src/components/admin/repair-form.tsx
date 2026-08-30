@@ -26,7 +26,6 @@ export function RepairForm({
     imei?: string | null;
     amount?: number | string | null;
     advancePaid?: number | string | null;
-    warrantyDays?: number | null;
     notes?: string | null;
   };
   defaults?: {
@@ -53,7 +52,6 @@ export function RepairForm({
       imei: String(fd.get("imei") ?? "") || null,
       amount: fd.get("amount") === "" ? null : Number(fd.get("amount")),
       advancePaid: fd.get("advancePaid") === "" ? 0 : Number(fd.get("advancePaid")),
-      warrantyDays: fd.get("warrantyDays") === "" ? null : Number(fd.get("warrantyDays")),
       notes: String(fd.get("notes") ?? "") || null,
     };
 
@@ -109,7 +107,7 @@ export function RepairForm({
       />
 
       <Input name="imei" placeholder="IMEI" defaultValue={initial?.imei ?? ""} className="h-12 text-base" />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Input
           name="amount"
           type="number"
@@ -126,14 +124,6 @@ export function RepairForm({
           step="1"
           placeholder="Advance"
           defaultValue={initial?.advancePaid != null ? String(initial.advancePaid) : "0"}
-          className="h-12 text-base"
-        />
-        <Input
-          name="warrantyDays"
-          type="number"
-          min="0"
-          placeholder="Warranty days"
-          defaultValue={initial?.warrantyDays != null ? String(initial.warrantyDays) : ""}
           className="h-12 text-base"
         />
       </div>
