@@ -1,30 +1,12 @@
-# MR Mobile Zone
+﻿# MR Mobile Zone — Backend branch
 
-This repository is split into:
-
-| Folder / branch | Role |
-|-----------------|------|
-| [`frontend/`](frontend/) on **`main`** | Next.js marketing site + admin CRM |
-| [`backend/`](backend/) on **`backend`** branch | Express + MongoDB API |
-
-## Run locally
-
-Terminal 1 — API:
+Primary deployable app for this branch: `backend/` (Express + MongoDB API).
 
 ```bash
 cd backend
-cp .env.example .env.local   # set MONGODB_URI
 npm install
-npm run dev                  # http://localhost:4000
+cp .env.example .env.local
+npm run dev   # http://localhost:4000
 ```
 
-Terminal 2 — UI:
-
-```bash
-cd frontend
-cp .env.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:4000
-npm install
-npm run dev                  # http://localhost:3000
-```
-
-Demo admin: `admin@mrmobilezone.com` / `Admin@12345`
+The Next.js UI lives on `main` under `frontend/`.
