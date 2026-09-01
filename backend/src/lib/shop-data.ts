@@ -1,6 +1,8 @@
 import { readFileSync } from "fs";
 import path from "path";
 import type { DemoCustomer, DemoRepair, DemoRepairStatus } from "@/lib/demo-store";
+import { DEFAULT_REPAIR_INTAKE } from "@/lib/repair-intake";
+import { normalizeRepairStatus } from "@/lib/repairs";
 
 export type ShopOrderRow = {
   sNo: number;
@@ -22,18 +24,22 @@ function normalizePhone(raw: string) {
 
 function mapOrderStatus(raw: string): DemoRepairStatus {
   const s = raw.trim();
-  if (s === "Canceled") return "CLOSED";
+  if (s === "Canceled") return "DELIVERED";
   if (/delivered/i.test(s)) return "DELIVERED";
   if (/pending/i.test(s)) return "RECEIVED";
   if (/processing|in progress/i.test(s)) return "IN_REPAIR";
-  if (/completed/i.test(s)) return "READY_FOR_DELIVERY";
-  return "RECEIVED";
+  if (/completed/i.test(s)) return "IN_REPAIR";
+  return normalizeRepairStatus(s);
 }
 
 function loadOrders(): ShopOrderRow[] {
   const file = path.join(process.cwd(), "mobile_zone_service.json");
   const raw = JSON.parse(readFileSync(file, "utf8")) as ShopOrderRow[];
   return Array.isArray(raw) ? raw : [];
+}
+
+function auditFields(createdAt: Date) {
+  return { isDeleted: false, deletedAt: null, updatedAt: createdAt };
 }
 
 export function buildShopRecords(): { customers: DemoCustomer[]; repairs: DemoRepair[]; jobSeq: number } {
@@ -46,6 +52,7 @@ export function buildShopRecords(): { customers: DemoCustomer[]; repairs: DemoRe
     if (!phone) continue;
 
     let customer = customerByPhone.get(phone);
+    const createdAt = new Date(row.orderDate);
     if (!customer) {
       customer = {
         id: `cust_${phone}`,
@@ -54,24 +61,26 @@ export function buildShopRecords(): { customers: DemoCustomer[]; repairs: DemoRe
         altPhone: null,
         address: null,
         location: "Chennai",
-        createdAt: new Date(row.orderDate),
+        createdAt,
+        ...auditFields(createdAt),
       };
       customerByPhone.set(phone, customer);
-    } else if (new Date(row.orderDate) < customer.createdAt) {
-      customer.createdAt = new Date(row.orderDate);
+    } else if (createdAt < customer.createdAt) {
+      customer.createdAt = createdAt;
     }
 
     const brand = row.phoneName?.trim() || "Unknown";
     const model = row.phoneModel?.trim() || "Unknown";
-    const imei =
-      row.imeiNumber && row.imeiNumber !== "-" ? row.imeiNumber.trim() : null;
+    const imei = row.imeiNumber && row.imeiNumber !== "-" ? row.imeiNumber.trim() : null;
     const status = mapOrderStatus(row.orderStatus);
-    const createdAt = new Date(row.orderDate);
 
     repairs.push({
       id: `rep_${row.sNo}`,
       jobId: row.orderId.startsWith("ORD-") ? row.orderId : `ORD-${row.orderId}`,
       customerId: customer.id,
+      source: "WALK_IN",
+      dealerId: null,
+      batchId: null,
       modelId: null,
       deviceBrandRaw: brand,
       deviceModelRaw: model,
@@ -85,7 +94,9 @@ export function buildShopRecords(): { customers: DemoCustomer[]; repairs: DemoRe
       deliveredAt: status === "DELIVERED" ? createdAt : null,
       notes: row.orderStatus,
       imageUrl: null,
+      intakeChecks: { ...DEFAULT_REPAIR_INTAKE },
       createdAt,
+      ...auditFields(createdAt),
     });
   }
 

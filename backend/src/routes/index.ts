@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/api-auth";
 import { usingMemoryFallback } from "@/lib/db/backend";
 import {
+  buildAttendanceCsv,
   countCustomers,
   countEnquiries,
   countRepairs,
@@ -15,6 +16,7 @@ import {
   deleteEnquiry,
   deleteRepair,
   findCustomerByPhone,
+  getAttendanceForDate,
   getCustomerById,
   getEnquiryById,
   getEstimate,
@@ -24,6 +26,7 @@ import {
   getRepairCount,
   getRepairsForCustomer,
   listBrands,
+  listEmployees,
   listEnquiries,
   listIssues,
   listModels,
@@ -32,13 +35,28 @@ import {
   updateCustomer,
   updateEnquiryStatus,
   updateRepair,
+  upsertAttendanceBulk,
   writeAudit,
 } from "@/lib/db";
+import {
+  countDealerPendingJobs,
+  createDealer,
+  createDealerBatch,
+  getDealerById,
+  listDealerBatches,
+  queryDealers,
+  updateDealer,
+} from "@/lib/dealers";
 import type { DemoEnquiryStatus, DemoRepairStatus } from "@/lib/demo-store";
+import { normalizeRepairIntakeChecks } from "@/lib/repair-intake";
 import { emptyToNull } from "@/lib/repairs";
 import {
+  attendanceBulkSchema,
+  attendanceExportQuerySchema,
   courseNotifySchema,
   customerSchema,
+  dealerBatchSchema,
+  dealerSchema,
   enquirySchema,
   enquiryStatusSchema,
   estimateQuerySchema,
@@ -67,6 +85,7 @@ const quickJobSchema = z.object({
   location: z.string().optional().or(z.literal("")),
   amount: z.coerce.number().nonnegative().optional().nullable(),
   notes: z.string().max(2000).optional().or(z.literal("")),
+  intakeChecks: z.any().optional(),
 });
 
 function asyncHandler(
@@ -89,7 +108,8 @@ apiRouter.get(
   asyncHandler(async (_req, res) => {
     await requireAdmin();
     const pending = await countRepairs({
-      status: ["RECEIVED", "DIAGNOSED", "IN_REPAIR", "QUALITY_CHECK", "READY_FOR_DELIVERY"],
+      status: ["RECEIVED", "IN_REPAIR"],
+      walkInOnly: true,
     });
     const newEnquiries = await countEnquiries("NEW");
     const customerCount = await countCustomers();
@@ -322,12 +342,21 @@ apiRouter.get(
       | DemoRepairStatus
       | undefined;
     const customerId = typeof req.query.customerId === "string" ? req.query.customerId : undefined;
+    const dealerId = typeof req.query.dealerId === "string" ? req.query.dealerId : undefined;
+    const batchId = typeof req.query.batchId === "string" ? req.query.batchId : undefined;
+    const jobSource =
+      req.query.jobSource === "DEALER" || req.query.jobSource === "ALL"
+        ? req.query.jobSource
+        : "WALK_IN";
     const page = Math.max(1, Number(req.query.page ?? 1));
     const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize ?? 20)));
     const { repairs, total, customerMap } = await queryRepairs({
       q,
       status,
       customerId,
+      dealerId,
+      batchId,
+      jobSource,
       page,
       pageSize,
     });
@@ -365,6 +394,9 @@ apiRouter.post(
     }
     const repair = await createRepair({
       customerId: parsed.data.customerId,
+      source: "WALK_IN",
+      dealerId: null,
+      batchId: null,
       modelId: emptyToNull(parsed.data.modelId),
       deviceBrandRaw: emptyToNull(parsed.data.deviceBrandRaw),
       deviceModelRaw: emptyToNull(parsed.data.deviceModelRaw),
@@ -375,6 +407,7 @@ apiRouter.post(
       advancePaid: parsed.data.advancePaid ?? 0,
       notes: emptyToNull(parsed.data.notes),
       deliveryDate: parsed.data.deliveryDate ? new Date(parsed.data.deliveryDate) : null,
+      intakeChecks: normalizeRepairIntakeChecks(parsed.data.intakeChecks),
     });
     await writeAudit({
       adminUserId: auth.userId,
@@ -435,6 +468,7 @@ apiRouter.put(
       advancePaid: parsed.data.advancePaid ?? 0,
       notes: emptyToNull(parsed.data.notes),
       deliveryDate: parsed.data.deliveryDate ? new Date(parsed.data.deliveryDate) : null,
+      intakeChecks: normalizeRepairIntakeChecks(parsed.data.intakeChecks),
     });
     if (!repair) {
       res.status(404).json({ error: "Not found" });
@@ -613,6 +647,9 @@ apiRouter.post(
     if (body.createJob !== false) {
       repair = await createRepair({
         customerId: customer.id,
+        source: "WALK_IN",
+        dealerId: null,
+        batchId: null,
         modelId: null,
         deviceBrandRaw: null,
         deviceModelRaw: enquiry.device,
@@ -624,6 +661,7 @@ apiRouter.post(
         notes: enquiry.message,
         deliveryDate: null,
         imageUrl: enquiry.imageUrl,
+        intakeChecks: normalizeRepairIntakeChecks(),
       });
       await writeAudit({
         adminUserId: auth.userId,
@@ -696,6 +734,9 @@ apiRouter.post(
     }
     const repair = await createRepair({
       customerId: customer.id,
+      source: "WALK_IN",
+      dealerId: null,
+      batchId: null,
       modelId: parsed.data.modelId || null,
       deviceBrandRaw: parsed.data.deviceBrandRaw || null,
       deviceModelRaw: parsed.data.deviceModelRaw || null,
@@ -707,6 +748,7 @@ apiRouter.post(
       notes: parsed.data.notes || null,
       deliveryDate: null,
       imageUrl: parsed.data.imageUrl,
+      intakeChecks: normalizeRepairIntakeChecks(parsed.data.intakeChecks),
     });
     await writeAudit({
       adminUserId: auth.userId,
@@ -716,6 +758,159 @@ apiRouter.post(
       changes: { jobId: repair.jobId, issue: repair.issue },
     });
     res.status(201).json({ customer, repair });
+  })
+);
+
+apiRouter.get(
+  "/dealers",
+  asyncHandler(async (req, res) => {
+    await requireAdmin();
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    const page = Math.max(1, Number(req.query.page ?? 1));
+    const pageSize = Math.min(50, Math.max(1, Number(req.query.pageSize ?? 20)));
+    const { dealers, total } = await queryDealers({ q, page, pageSize });
+    const enriched = await Promise.all(
+      dealers.map(async (d) => ({
+        ...d,
+        pendingJobs: await countDealerPendingJobs(d.id),
+        batchCount: (await listDealerBatches(d.id)).length,
+      }))
+    );
+    res.json({
+      dealers: enriched,
+      pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) || 1 },
+    });
+  })
+);
+
+apiRouter.post(
+  "/dealers",
+  asyncHandler(async (req, res) => {
+    const auth = await requireAdmin();
+    const parsed = dealerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    const dealer = await createDealer({
+      name: parsed.data.name,
+      shopName: parsed.data.shopName,
+      phone: parsed.data.phone,
+      location: emptyToNull(parsed.data.location),
+      notes: emptyToNull(parsed.data.notes),
+    });
+    await writeAudit({
+      adminUserId: auth.userId,
+      action: "CREATE",
+      entityType: "Dealer",
+      entityId: dealer.id,
+      changes: dealer,
+    });
+    res.status(201).json({ dealer });
+  })
+);
+
+apiRouter.get(
+  "/dealers/:id",
+  asyncHandler(async (req, res) => {
+    await requireAdmin();
+    const dealer = await getDealerById(req.params.id);
+    if (!dealer) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    const batches = await listDealerBatches(dealer.id);
+    const { repairs } = await queryRepairs({
+      dealerId: dealer.id,
+      jobSource: "ALL",
+      page: 1,
+      pageSize: 50,
+    });
+    res.json({
+      dealer: {
+        ...dealer,
+        pendingJobs: await countDealerPendingJobs(dealer.id),
+        batches,
+        repairs,
+      },
+    });
+  })
+);
+
+apiRouter.put(
+  "/dealers/:id",
+  asyncHandler(async (req, res) => {
+    const auth = await requireAdmin();
+    const parsed = dealerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    const dealer = await updateDealer(req.params.id, {
+      name: parsed.data.name,
+      shopName: parsed.data.shopName,
+      phone: parsed.data.phone,
+      location: emptyToNull(parsed.data.location),
+      notes: emptyToNull(parsed.data.notes),
+    });
+    if (!dealer) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    await writeAudit({
+      adminUserId: auth.userId,
+      action: "UPDATE",
+      entityType: "Dealer",
+      entityId: dealer.id,
+      changes: dealer,
+    });
+    res.json({ dealer });
+  })
+);
+
+apiRouter.post(
+  "/dealers/:id/batches",
+  asyncHandler(async (req, res) => {
+    const auth = await requireAdmin();
+    const parsed = dealerBatchSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const first =
+        Object.values(parsed.error.flatten().fieldErrors).flat().find(Boolean) ||
+        parsed.error.flatten().formErrors[0] ||
+        "Invalid input";
+      res.status(400).json({ error: first });
+      return;
+    }
+    const devices = parsed.data.devices.filter(
+      (d) => d.deviceModelRaw.trim() || d.issue.trim()
+    );
+    if (devices.length === 0) {
+      res.status(400).json({ error: "Add at least one device with model and issue" });
+      return;
+    }
+    const result = await createDealerBatch(req.params.id, {
+      notes: emptyToNull(parsed.data.notes),
+      devices: devices.map((d) => ({
+        deviceBrandRaw: emptyToNull(d.deviceBrandRaw),
+        deviceModelRaw: d.deviceModelRaw.trim(),
+        modelId: emptyToNull(d.modelId),
+        issue: d.issue.trim(),
+        imei: emptyToNull(d.imei),
+        intakeChecks: normalizeRepairIntakeChecks(d.intakeChecks),
+      })),
+    });
+    if (!result) {
+      res.status(404).json({ error: "Dealer not found" });
+      return;
+    }
+    await writeAudit({
+      adminUserId: auth.userId,
+      action: "CREATE",
+      entityType: "DealerBatch",
+      entityId: result.batch.id,
+      changes: { batchRef: result.batch.batchRef, count: result.repairs.length },
+    });
+    res.status(201).json(result);
   })
 );
 
@@ -736,5 +931,78 @@ apiRouter.post(
     const mime = file.mimetype === "image/jpg" ? "image/jpeg" : file.mimetype;
     const url = `data:${mime};base64,${file.buffer.toString("base64")}`;
     res.status(201).json({ url });
+  })
+);
+
+apiRouter.get(
+  "/employees",
+  asyncHandler(async (_req, res) => {
+    await requireAdmin();
+    const employees = await listEmployees();
+    res.json({ employees });
+  })
+);
+
+apiRouter.get(
+  "/attendance/export",
+  asyncHandler(async (req, res) => {
+    await requireAdmin();
+    const parsed = attendanceExportQuerySchema.safeParse({
+      from: req.query.from,
+      to: req.query.to,
+    });
+    if (!parsed.success) {
+      const first =
+        Object.values(parsed.error.flatten().fieldErrors).flat().find(Boolean) ||
+        parsed.error.flatten().formErrors[0] ||
+        "Invalid date range";
+      res.status(400).json({ error: first });
+      return;
+    }
+    const csv = await buildAttendanceCsv(parsed.data.from, parsed.data.to);
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="attendance-${parsed.data.from}-to-${parsed.data.to}.csv"`
+    );
+    res.send(`\uFEFF${csv}`);
+  })
+);
+
+apiRouter.get(
+  "/attendance",
+  asyncHandler(async (req, res) => {
+    await requireAdmin();
+    const date =
+      typeof req.query.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
+        ? req.query.date
+        : new Date().toISOString().slice(0, 10);
+    const data = await getAttendanceForDate(date);
+    res.json(data);
+  })
+);
+
+apiRouter.put(
+  "/attendance",
+  asyncHandler(async (req, res) => {
+    const auth = await requireAdmin();
+    const parsed = attendanceBulkSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const first =
+        Object.values(parsed.error.flatten().fieldErrors).flat().find(Boolean) ||
+        parsed.error.flatten().formErrors[0] ||
+        "Invalid input";
+      res.status(400).json({ error: first });
+      return;
+    }
+    const records = await upsertAttendanceBulk(parsed.data);
+    await writeAudit({
+      adminUserId: auth.userId,
+      action: "UPDATE",
+      entityType: "Attendance",
+      entityId: parsed.data.date,
+      changes: { count: records.length, date: parsed.data.date },
+    });
+    res.json({ date: parsed.data.date, records });
   })
 );
