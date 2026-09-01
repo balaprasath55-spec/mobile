@@ -1,12 +1,12 @@
 "use client";
 
-import { apiUrl } from "@/lib/api-client";
-
+import { apiFetch } from "@/lib/api-client";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useRefreshAdminData } from "@/lib/use-refresh-admin-data";
 
 type CustomerFormValues = {
   name: string;
@@ -24,13 +24,16 @@ export function CustomerForm({
   customerId?: string;
 }) {
   const router = useRouter();
+  const refreshData = useRefreshAdminData();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSaved(false);
     const fd = new FormData(e.currentTarget);
     const payload = {
       name: String(fd.get("name") ?? ""),
@@ -40,10 +43,9 @@ export function CustomerForm({
       location: String(fd.get("location") ?? ""),
     };
 
-    const res = await fetch(customerId ? apiUrl(`/api/customers/${customerId}`) : apiUrl("/api/customers"), {
+    const res = await apiFetch(customerId ? `/api/customers/${customerId}` : "/api/customers", {
       method: customerId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      json: payload,
     });
 
     setLoading(false);
@@ -54,8 +56,12 @@ export function CustomerForm({
     }
 
     const data = await res.json();
+    if (customerId) {
+      setSaved(true);
+      refreshData();
+      return;
+    }
     router.push(`/customers/${data.customer.id}`);
-    router.refresh();
   }
 
   return (
@@ -66,6 +72,7 @@ export function CustomerForm({
       <Input name="location" placeholder="Location / area" defaultValue={initial?.location ?? ""} />
       <Textarea name="address" placeholder="Address" defaultValue={initial?.address ?? ""} />
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {saved ? <p className="text-sm text-emerald-600">Saved</p> : null}
       <Button type="submit" variant="accent" disabled={loading}>
         {loading ? "Saving…" : customerId ? "Update customer" : "Create customer"}
       </Button>

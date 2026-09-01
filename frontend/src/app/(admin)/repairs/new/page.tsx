@@ -1,32 +1,16 @@
-import type { Metadata } from "next";
-import { QuickJobForm } from "@/components/admin/quick-job-form";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "New job" };
-
-export default async function NewRepairPage({
+/** New job intake lives on the dashboard. */
+export default function NewRepairPage({
   searchParams,
 }: {
-  searchParams: { name?: string; phone?: string; issue?: string; device?: string };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
-  return (
-    <div>
-      <h1 className="font-display text-xl font-semibold text-navy dark:text-white md:text-2xl">
-        New job
-      </h1>
-      <p className="mt-1 text-sm text-muted">
-        Only name, phone, issue &amp; photo are required.
-      </p>
-      <div className="mt-5">
-        <QuickJobForm
-          defaults={{
-            name: searchParams.name,
-            phone: searchParams.phone,
-            issue: searchParams.issue,
-            device: searchParams.device,
-          }}
-        />
-      </div>
-    </div>
-  );
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (typeof value === "string") qs.set(key, value);
+    else if (Array.isArray(value) && value[0]) qs.set(key, value[0]);
+  }
+  const query = qs.toString();
+  redirect(query ? `/dashboard?${query}` : "/dashboard");
 }

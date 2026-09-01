@@ -1,6 +1,6 @@
 "use client";
 
-import { apiUrl } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
 
 import { FormEvent, Suspense, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -52,7 +52,7 @@ function EnquiryForm() {
         message: String(fd.get("message") ?? "").trim() || undefined,
       };
 
-      const res = await fetch(apiUrl("/api/enquiries"), {
+      const res = await apiFetch("/api/enquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

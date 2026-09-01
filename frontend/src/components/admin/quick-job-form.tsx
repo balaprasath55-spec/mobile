@@ -1,17 +1,21 @@
 "use client";
 
-import { apiUrl } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
 
 import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, ChevronDown, ImagePlus } from "lucide-react";
 import { BrandModelSelect } from "@/components/admin/brand-model-select";
+import { RepairIntakeToggles } from "@/components/admin/repair-intake-toggles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { fileToDataUrl } from "@/lib/image-data-url";
+import { DEFAULT_REPAIR_INTAKE, type RepairIntakeChecks } from "@/lib/repair-intake";
+import type { CatalogBrand } from "@/lib/server-api";
 
 type Props = {
+  brands: CatalogBrand[];
   defaults?: {
     name?: string;
     phone?: string;
@@ -33,12 +37,13 @@ function formatApiError(data: unknown): string {
   return "Could not save";
 }
 
-export function QuickJobForm({ defaults }: Props) {
+export function QuickJobForm({ brands, defaults }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [showMore, setShowMore] = useState(false);
+  const [intakeChecks, setIntakeChecks] = useState<RepairIntakeChecks>(DEFAULT_REPAIR_INTAKE);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -75,18 +80,17 @@ export function QuickJobForm({ defaults }: Props) {
         location: String(fd.get("location") ?? ""),
         amount: Number.isFinite(amount as number) ? amount : null,
         notes: String(fd.get("notes") ?? ""),
+        intakeChecks,
       };
 
-      const res = await fetch(apiUrl("/api/jobs/quick"), {
+      const res = await apiFetch("/api/jobs/quick", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        json: payload,
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(formatApiError(data));
 
       router.push(`/repairs/${data.repair.id}`);
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
@@ -127,7 +131,7 @@ export function QuickJobForm({ defaults }: Props) {
         />
       </label>
 
-      <BrandModelSelect defaultBrandName={defaults?.brand} defaultModelName={defaults?.device} />
+      <BrandModelSelect brands={brands} defaultBrandName={defaults?.brand} defaultModelName={defaults?.device} />
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-navy dark:text-white">
@@ -179,6 +183,8 @@ export function QuickJobForm({ defaults }: Props) {
           ) : null}
         </button>
       </div>
+
+      <RepairIntakeToggles value={intakeChecks} onChange={setIntakeChecks} />
 
       <button
         type="button"

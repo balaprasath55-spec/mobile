@@ -1,27 +1,52 @@
 "use client";
 
-import { apiUrl } from "@/lib/api-client";
-
-import { useEffect, useState } from "react";
-
-type Brand = { id: string; name: string };
-type Model = { id: string; name: string; brandId: string };
+import { useMemo, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
+import type { CatalogBrand, CatalogModel } from "@/lib/server-api";
 
 const selectClass =
   "h-12 w-full rounded-2xl border border-navy/10 bg-white px-4 text-base text-navy dark:border-white/10 dark:bg-navy-800 dark:text-white";
 
 type Props = {
-  /** Optional: preselect by brand/model name */
+  brands: CatalogBrand[];
+  /** Preloaded models for the initial brand (edit forms). */
+  initialModels?: CatalogModel[];
   defaultBrandName?: string | null;
   defaultModelName?: string | null;
-  /** Optional: preselect by catalog ids */
   defaultBrandId?: string;
   defaultModelId?: string;
   required?: boolean;
   className?: string;
 };
 
+function resolveInitialBrandId(
+  brands: CatalogBrand[],
+  defaultBrandId: string,
+  defaultBrandName?: string | null,
+  defaultModelId?: string
+) {
+  if (defaultBrandId) return defaultBrandId;
+  const fromModel = (defaultModelId?.match(/^model_(brand_[a-z0-9]+)_\d+$/) || [])[1];
+  if (fromModel) return fromModel;
+  if (defaultBrandName) {
+    const match = brands.find((b) => b.name.toLowerCase() === defaultBrandName.toLowerCase());
+    if (match) return match.id;
+  }
+  return "";
+}
+
+function resolveInitialModelId(models: CatalogModel[], defaultModelId: string, defaultModelName?: string | null) {
+  if (defaultModelId && models.some((m) => m.id === defaultModelId)) return defaultModelId;
+  if (defaultModelName) {
+    const match = models.find((m) => m.name.toLowerCase() === defaultModelName.toLowerCase());
+    if (match) return match.id;
+  }
+  return defaultModelId && models.some((m) => m.id === defaultModelId) ? defaultModelId : "";
+}
+
 export function BrandModelSelect({
+  brands,
+  initialModels = [],
   defaultBrandName,
   defaultModelName,
   defaultBrandId = "",
@@ -29,69 +54,34 @@ export function BrandModelSelect({
   required = false,
   className,
 }: Props) {
-  const inferredBrandId =
-    defaultBrandId ||
-    (defaultModelId.match(/^model_(brand_[a-z0-9]+)_\d+$/) || [])[1] ||
-    "";
+  const initialBrandId = useMemo(
+    () => resolveInitialBrandId(brands, defaultBrandId, defaultBrandName, defaultModelId),
+    [brands, defaultBrandId, defaultBrandName, defaultModelId]
+  );
 
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [models, setModels] = useState<Model[]>([]);
-  const [brandId, setBrandId] = useState(inferredBrandId);
-  const [modelId, setModelId] = useState(defaultModelId);
-  const [loadingBrands, setLoadingBrands] = useState(true);
+  const [models, setModels] = useState<CatalogModel[]>(initialModels);
+  const [brandId, setBrandId] = useState(initialBrandId);
+  const [modelId, setModelId] = useState(() =>
+    resolveInitialModelId(initialModels, defaultModelId, defaultModelName)
+  );
   const [loadingModels, setLoadingModels] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch(apiUrl("/api/brands")).then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        const list: Brand[] = data.brands ?? [];
-        setBrands(list);
-        if (!brandId && defaultBrandName) {
-          const match = list.find((b) => b.name.toLowerCase() === defaultBrandName.toLowerCase());
-          if (match) setBrandId(match.id);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingBrands(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!brandId) {
+  async function onBrandChange(nextBrandId: string) {
+    setBrandId(nextBrandId);
+    setModelId("");
+    if (!nextBrandId) {
       setModels([]);
-      setModelId("");
       return;
     }
     setLoadingModels(true);
-    fetch(apiUrl(`/api/models?brandId=${encodeURIComponent(brandId)}`))
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        const list: Model[] = data.models ?? [];
-        setModels(list);
-        if (defaultModelName) {
-          const match = list.find((m) => m.name.toLowerCase() === defaultModelName.toLowerCase());
-          if (match) setModelId(match.id);
-          else if (!list.some((m) => m.id === modelId)) setModelId("");
-        } else if (!list.some((m) => m.id === modelId)) {
-          setModelId("");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingModels(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brandId]);
+    try {
+      const res = await apiFetch(`/api/models?brandId=${encodeURIComponent(nextBrandId)}`);
+      const data = await res.json();
+      setModels(data.models ?? []);
+    } finally {
+      setLoadingModels(false);
+    }
+  }
 
   const brandName = brands.find((b) => b.id === brandId)?.name ?? "";
   const modelName = models.find((m) => m.id === modelId)?.name ?? "";
@@ -106,13 +96,9 @@ export function BrandModelSelect({
           className={selectClass}
           value={brandId}
           required={required}
-          disabled={loadingBrands}
-          onChange={(e) => {
-            setBrandId(e.target.value);
-            setModelId("");
-          }}
+          onChange={(e) => onBrandChange(e.target.value)}
         >
-          <option value="">{loadingBrands ? "Loading…" : "Select brand"}</option>
+          <option value="">Select brand</option>
           {brands.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}
@@ -143,7 +129,6 @@ export function BrandModelSelect({
         </select>
       </label>
 
-      {/* Submitted with the parent form */}
       <input type="hidden" name="modelId" value={modelId} />
       <input type="hidden" name="deviceBrandRaw" value={brandName} />
       <input type="hidden" name="deviceModelRaw" value={modelName} />

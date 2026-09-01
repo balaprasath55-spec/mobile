@@ -14,7 +14,7 @@ export default function PricingPage() {
     <Section>
       <SectionHeading
         title="Price estimator"
-        subtitle="Select your device and issue for an instant INR range. Final quote after free diagnosis."
+        subtitle="Select your brand and model to see repair price ranges — back door, battery, display, and more. Final quote after free diagnosis."
       />
       <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-surface" />}>
         <PriceEstimator />

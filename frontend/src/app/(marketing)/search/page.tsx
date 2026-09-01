@@ -10,8 +10,8 @@ import { faqs, services } from "@/lib/content";
 const index = [
   ...services.map((s) => ({ title: s.title, href: `/services/${s.slug}`, blurb: s.summary, type: "Service" })),
   { title: "Price estimator", href: "/pricing", blurb: "Get a repair price range", type: "Page" },
-  { title: "Courier repair", href: "/courier", blurb: "All-India shipping repair", type: "Page" },
-  { title: "Contact", href: "/contact", blurb: "Call, WhatsApp, visit", type: "Page" },
+  { title: "iPhone displays", href: "/displays", blurb: "Removed displays with sensor flex — order on WhatsApp", type: "Page" },
+  { title: "About & contact", href: "/about", blurb: "Our story, team, visit us in George Town", type: "Page" },
   ...faqs.flatMap((g) =>
     g.items.map((item) => ({ title: item.q, href: "/faq", blurb: item.a, type: "FAQ" }))
   ),

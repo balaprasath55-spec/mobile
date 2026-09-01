@@ -1,23 +1,34 @@
 "use client";
 
-import { apiUrl } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandModelSelect } from "@/components/admin/brand-model-select";
+import { RepairIntakeToggles } from "@/components/admin/repair-intake-toggles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { updateLocalRepair } from "@/lib/demo-local";
+import type { CatalogBrand, CatalogModel } from "@/lib/server-api";
+import {
+  normalizeRepairIntakeChecks,
+  type RepairIntakeChecks,
+} from "@/lib/repair-intake";
+import { useRefreshAdminData } from "@/lib/use-refresh-admin-data";
 
 export function RepairForm({
   customerId,
+  brands,
+  initialModels = [],
   initial,
   repairId,
   defaults,
   local = false,
 }: {
   customerId: string;
+  brands: CatalogBrand[];
+  initialModels?: CatalogModel[];
   repairId?: string;
   local?: boolean;
   initial?: {
@@ -29,6 +40,7 @@ export function RepairForm({
     amount?: number | string | null;
     advancePaid?: number | string | null;
     notes?: string | null;
+    intakeChecks?: RepairIntakeChecks;
   };
   defaults?: {
     issue?: string;
@@ -37,13 +49,19 @@ export function RepairForm({
   };
 }) {
   const router = useRouter();
+  const refreshData = useRefreshAdminData();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [intakeChecks, setIntakeChecks] = useState<RepairIntakeChecks>(
+    normalizeRepairIntakeChecks(initial?.intakeChecks)
+  );
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSaved(false);
     const fd = new FormData(e.currentTarget);
     const payload = {
       customerId,
@@ -55,6 +73,7 @@ export function RepairForm({
       amount: fd.get("amount") === "" ? null : Number(fd.get("amount")),
       advancePaid: fd.get("advancePaid") === "" ? 0 : Number(fd.get("advancePaid")),
       notes: String(fd.get("notes") ?? "") || null,
+      intakeChecks,
     };
 
     if (local && repairId) {
@@ -64,21 +83,21 @@ export function RepairForm({
         setError("Could not save repair job");
         return;
       }
-      window.location.href = `/repairs/${repairId}`;
+      setSaved(true);
+      refreshData();
       return;
     }
 
-    const res = await fetch(repairId ? apiUrl(`/api/repairs/${repairId}`) : apiUrl("/api/repairs"), {
+    const res = await apiFetch(repairId ? `/api/repairs/${repairId}` : "/api/repairs", {
       method: repairId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      json: {
         ...payload,
         modelId: payload.modelId || "",
         deviceBrandRaw: payload.deviceBrandRaw || "",
         deviceModelRaw: payload.deviceModelRaw || "",
         imei: payload.imei || "",
         notes: payload.notes || "",
-      }),
+      },
     });
 
     setLoading(false);
@@ -88,8 +107,12 @@ export function RepairForm({
     }
 
     const data = await res.json();
+    if (repairId) {
+      setSaved(true);
+      refreshData();
+      return;
+    }
     router.push(`/repairs/${data.repair.id}`);
-    router.refresh();
   }
 
   return (
@@ -103,6 +126,8 @@ export function RepairForm({
       />
 
       <BrandModelSelect
+        brands={brands}
+        initialModels={initialModels}
         defaultBrandName={initial?.deviceBrandRaw}
         defaultModelName={initial?.deviceModelRaw ?? defaults?.deviceModelRaw}
         defaultModelId={initial?.modelId ?? ""}
@@ -130,7 +155,11 @@ export function RepairForm({
         />
       </div>
       <Textarea name="notes" placeholder="Notes" defaultValue={initial?.notes ?? defaults?.notes ?? ""} className="text-base" />
+
+      <RepairIntakeToggles value={intakeChecks} onChange={setIntakeChecks} />
+
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {saved ? <p className="text-sm text-emerald-600">Saved</p> : null}
       <Button type="submit" variant="accent" disabled={loading} className="h-12">
         {loading ? "Saving…" : repairId ? "Update job" : "Create job"}
       </Button>

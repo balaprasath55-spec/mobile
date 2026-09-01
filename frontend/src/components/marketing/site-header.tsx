@@ -10,12 +10,9 @@ import { cn, SITE } from "@/lib/utils";
 const nav = [
   { href: "/services", label: "Services" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/devices", label: "Devices" },
-  { href: "/courier", label: "Courier" },
-  { href: "/gallery", label: "Gallery" },
+  { href: "/displays", label: "Displays" },
   { href: "/courses", label: "Courses" },
   { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
 ];
 
 export function SiteHeader() {

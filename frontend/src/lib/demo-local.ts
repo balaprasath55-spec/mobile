@@ -4,6 +4,7 @@
  */
 
 import type { DemoCustomer, DemoRepair, DemoRepairStatus } from "@/lib/demo-store";
+import { normalizeRepairIntakeChecks, type RepairIntakeChecks } from "@/lib/repair-intake";
 
 const KEY = "mr-mobile-zone-demo-v1";
 
@@ -17,19 +18,39 @@ function emptyDb(): LocalDb {
   return { customers: [], repairs: [], jobSeq: 1 };
 }
 
+function reviveCustomer(c: DemoCustomer): DemoCustomer {
+  const createdAt = new Date(c.createdAt);
+  return {
+    ...c,
+    createdAt,
+    updatedAt: c.updatedAt ? new Date(c.updatedAt) : createdAt,
+    deletedAt: c.deletedAt ? new Date(c.deletedAt) : null,
+    isDeleted: Boolean(c.isDeleted),
+  };
+}
+
+function reviveRepair(r: DemoRepair): DemoRepair {
+  const createdAt = new Date(r.createdAt);
+  return {
+    ...r,
+    createdAt,
+    updatedAt: r.updatedAt ? new Date(r.updatedAt) : createdAt,
+    deletedAt: r.deletedAt ? new Date(r.deletedAt) : null,
+    isDeleted: Boolean(r.isDeleted),
+    deliveredAt: r.deliveredAt ? new Date(r.deliveredAt) : null,
+    deliveryDate: r.deliveryDate ? new Date(r.deliveryDate) : null,
+    intakeChecks: normalizeRepairIntakeChecks(r.intakeChecks),
+    source: r.source ?? "WALK_IN",
+    dealerId: r.dealerId ?? null,
+    batchId: r.batchId ?? null,
+  };
+}
+
 function revive(raw: LocalDb): LocalDb {
   return {
     jobSeq: raw.jobSeq || 1,
-    customers: (raw.customers ?? []).map((c) => ({
-      ...c,
-      createdAt: new Date(c.createdAt),
-    })),
-    repairs: (raw.repairs ?? []).map((r) => ({
-      ...r,
-      createdAt: new Date(r.createdAt),
-      deliveredAt: r.deliveredAt ? new Date(r.deliveredAt) : null,
-      deliveryDate: r.deliveryDate ? new Date(r.deliveryDate) : null,
-    })),
+    customers: (raw.customers ?? []).map(reviveCustomer),
+    repairs: (raw.repairs ?? []).map(reviveRepair),
   };
 }
 
@@ -53,18 +74,18 @@ function uid(prefix: string) {
 }
 
 export function listLocalRepairs() {
-  return loadLocalDb().repairs;
+  return loadLocalDb().repairs.filter((r) => !r.isDeleted);
 }
 
 export function listLocalCustomers() {
-  return loadLocalDb().customers;
+  return loadLocalDb().customers.filter((c) => !c.isDeleted);
 }
 
 export function getLocalRepairBundle(id: string): { repair: DemoRepair; customer: DemoCustomer } | null {
   const db = loadLocalDb();
-  const repair = db.repairs.find((r) => r.id === id);
+  const repair = db.repairs.find((r) => r.id === id && !r.isDeleted);
   if (!repair) return null;
-  const customer = db.customers.find((c) => c.id === repair.customerId);
+  const customer = db.customers.find((c) => c.id === repair.customerId && !c.isDeleted);
   if (!customer) return null;
   return { repair, customer };
 }
@@ -80,11 +101,13 @@ export function createLocalQuickJob(input: {
   location?: string;
   amount?: number | null;
   notes?: string;
+  intakeChecks?: RepairIntakeChecks;
 }) {
   const db = loadLocalDb();
   const phone = input.phone.replace(/\s+/g, "");
+  const now = new Date();
 
-  let customer = db.customers.find((c) => c.phone === phone);
+  let customer = db.customers.find((c) => c.phone === phone && !c.isDeleted);
   if (!customer) {
     customer = {
       id: uid("cust"),
@@ -93,7 +116,10 @@ export function createLocalQuickJob(input: {
       altPhone: null,
       address: null,
       location: input.location?.trim() || null,
-      createdAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
+      isDeleted: false,
+      deletedAt: null,
     };
     db.customers.unshift(customer);
   }
@@ -118,7 +144,14 @@ export function createLocalQuickJob(input: {
     deliveryDate: null,
     deliveredAt: null,
     imageUrl: input.imageUrl,
-    createdAt: new Date(),
+    source: "WALK_IN",
+    dealerId: null,
+    batchId: null,
+    intakeChecks: normalizeRepairIntakeChecks(input.intakeChecks),
+    createdAt: now,
+    updatedAt: now,
+    isDeleted: false,
+    deletedAt: null,
   };
   db.repairs.unshift(repair);
   saveLocalDb(db);
@@ -127,12 +160,13 @@ export function createLocalQuickJob(input: {
 
 export function updateLocalRepairStatus(repairId: string, status: DemoRepairStatus) {
   const db = loadLocalDb();
-  const idx = db.repairs.findIndex((r) => r.id === repairId);
+  const idx = db.repairs.findIndex((r) => r.id === repairId && !r.isDeleted);
   if (idx < 0) return null;
   db.repairs[idx] = {
     ...db.repairs[idx],
     status,
-    deliveredAt: status === "DELIVERED" || status === "CLOSED" ? new Date() : db.repairs[idx].deliveredAt,
+    updatedAt: new Date(),
+    deliveredAt: status === "DELIVERED" ? new Date() : db.repairs[idx].deliveredAt,
   };
   saveLocalDb(db);
   return db.repairs[idx];
@@ -140,13 +174,14 @@ export function updateLocalRepairStatus(repairId: string, status: DemoRepairStat
 
 export function updateLocalRepair(repairId: string, data: Partial<DemoRepair>) {
   const db = loadLocalDb();
-  const idx = db.repairs.findIndex((r) => r.id === repairId);
+  const idx = db.repairs.findIndex((r) => r.id === repairId && !r.isDeleted);
   if (idx < 0) return null;
   db.repairs[idx] = {
     ...db.repairs[idx],
     ...data,
     id: db.repairs[idx].id,
     jobId: db.repairs[idx].jobId,
+    updatedAt: new Date(),
   };
   saveLocalDb(db);
   return db.repairs[idx];

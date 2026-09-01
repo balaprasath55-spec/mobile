@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { repairIntakeChecksSchema, DEFAULT_REPAIR_INTAKE } from "@/lib/repair-intake";
 
 export const enquirySchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -49,18 +50,11 @@ export const repairSchema = z.object({
   advancePaid: z.coerce.number().nonnegative().optional().default(0),
   notes: z.string().max(2000).optional().or(z.literal("")),
   deliveryDate: z.string().optional().or(z.literal("")),
+  intakeChecks: repairIntakeChecksSchema.optional().default(DEFAULT_REPAIR_INTAKE),
 });
 
 export const repairStatusSchema = z.object({
-  status: z.enum([
-    "RECEIVED",
-    "DIAGNOSED",
-    "IN_REPAIR",
-    "QUALITY_CHECK",
-    "READY_FOR_DELIVERY",
-    "DELIVERED",
-    "CLOSED",
-  ]),
+  status: z.enum(["RECEIVED", "IN_REPAIR", "DELIVERED"]),
 });
 
 export const enquiryStatusSchema = z.object({

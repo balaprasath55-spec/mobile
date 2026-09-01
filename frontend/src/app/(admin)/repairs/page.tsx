@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Suspense } from "react";
+import { AdminLink } from "@/components/admin/admin-link";
 import type { Metadata } from "next";
 import { format } from "date-fns";
 import { AdminSearchBar } from "@/components/admin/admin-search-bar";
@@ -12,7 +12,6 @@ import { highlightSequentialMatch } from "@/lib/search-utils";
 import { serverApi } from "@/lib/server-api";
 import { formatINR } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Repairs" };
 
 type RepairRow = DemoRepair & {
@@ -30,7 +29,7 @@ export default async function RepairsPage({
   const pageSize = 20;
 
   const validStatus = status && REPAIR_STATUS_FLOW.includes(status) ? status : undefined;
-  const qs = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  const qs = new URLSearchParams({ page: String(page), pageSize: String(pageSize), jobSource: "WALK_IN" });
   if (qDisplay) qs.set("q", qDisplay);
   if (validStatus) qs.set("status", validStatus);
 
@@ -48,11 +47,11 @@ export default async function RepairsPage({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-xl font-semibold text-navy dark:text-white md:text-2xl">Jobs</h1>
-          <p className="mt-1 text-sm text-muted">{total} total</p>
+          <h1 className="font-display text-xl font-semibold text-navy dark:text-white md:text-2xl">Walk-in jobs</h1>
+          <p className="mt-1 text-sm text-muted">{total} walk-in · dealer jobs are under Dealers</p>
         </div>
         <Button asChild variant="accent" className="hidden md:inline-flex">
-          <Link href="/repairs/new">New job</Link>
+          <AdminLink href="/dashboard">New job</AdminLink>
         </Button>
       </div>
 
@@ -76,7 +75,7 @@ export default async function RepairsPage({
           const customer = customerMap.get(r.customerId)!;
           return (
             <li key={r.id}>
-              <Link
+              <AdminLink
                 href={`/repairs/${r.id}`}
                 className="flex items-start gap-3 rounded-2xl bg-white p-3 soft-shadow active:bg-surface dark:bg-navy-800"
               >
@@ -98,7 +97,7 @@ export default async function RepairsPage({
                   <p className="mt-1 font-mono text-[11px] text-muted">{highlightSequentialMatch(r.jobId, qDisplay)}</p>
                 </div>
                 <JobStatusBadge status={r.status} />
-              </Link>
+              </AdminLink>
             </li>
           );
         })}
@@ -115,9 +114,9 @@ export default async function RepairsPage({
               <tr key={r.id} className="border-t border-navy/5 dark:border-white/10">
                 <td className="px-4 py-3 font-mono text-xs">{highlightSequentialMatch(r.jobId, qDisplay)}</td>
                 <td className="px-4 py-3">
-                  <Link href={`/customers/${customer.id}`} className="font-medium text-navy hover:text-accent dark:text-white">
+                  <AdminLink href={`/customers/${customer.id}`} className="font-medium text-navy hover:text-accent dark:text-white">
                     {highlightSequentialMatch(customer.name, qDisplay)}
-                  </Link>
+                  </AdminLink>
                   <p className="text-xs text-muted">{highlightSequentialMatch(customer.phone, qDisplay)}</p>
                 </td>
                 <td className="px-4 py-3 text-muted">{highlightSequentialMatch(r.issue, qDisplay)}</td>
@@ -127,9 +126,9 @@ export default async function RepairsPage({
                 <td className="px-4 py-3 text-muted">{r.amount != null ? formatINR(r.amount) : "N/A"}</td>
                 <td className="px-4 py-3 text-muted">{format(r.createdAt, "dd MMM yyyy")}</td>
                 <td className="px-4 py-3 text-right">
-                  <Link href={`/repairs/${r.id}`} className="text-sm text-accent">
+                  <AdminLink href={`/repairs/${r.id}`} className="text-sm text-accent">
                     Open
-                  </Link>
+                  </AdminLink>
                 </td>
               </tr>
             );

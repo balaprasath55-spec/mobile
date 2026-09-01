@@ -14,7 +14,7 @@ type ApiOptions = RequestInit & { json?: unknown };
 
 export async function apiFetch(path: string, options: ApiOptions = {}) {
   const { json, headers, ...rest } = options;
-  const res = await fetch(apiUrl(path), {
+  return fetch(apiUrl(path), {
     ...rest,
     headers: {
       ...(json !== undefined ? { "Content-Type": "application/json" } : {}),
@@ -22,5 +22,9 @@ export async function apiFetch(path: string, options: ApiOptions = {}) {
     },
     body: json !== undefined ? JSON.stringify(json) : rest.body,
   });
-  return res;
+}
+
+/** @deprecated Use apiFetch — kept for callers that pass full URLs. */
+export async function trackedFetch(input: string, init?: RequestInit) {
+  return fetch(input, init);
 }

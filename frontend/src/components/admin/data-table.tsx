@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminLink } from "@/components/admin/admin-link";
 import { cn } from "@/lib/utils";
 
 export function DataTable({
@@ -57,7 +57,7 @@ export function Pagination({
         Page {page} of {totalPages}
       </p>
       <div className="flex gap-2">
-        <Link
+        <AdminLink
           href={href(Math.max(1, page - 1))}
           className={cn(
             "rounded-full border border-navy/10 px-3 py-1.5 dark:border-white/10",
@@ -65,8 +65,8 @@ export function Pagination({
           )}
         >
           Prev
-        </Link>
-        <Link
+        </AdminLink>
+        <AdminLink
           href={href(Math.min(totalPages, page + 1))}
           className={cn(
             "rounded-full border border-navy/10 px-3 py-1.5 dark:border-white/10",
@@ -74,7 +74,7 @@ export function Pagination({
           )}
         >
           Next
-        </Link>
+        </AdminLink>
       </div>
     </div>
   );

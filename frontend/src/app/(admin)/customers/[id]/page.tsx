@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminLink } from "@/components/admin/admin-link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import type { DemoCustomer, DemoRepair } from "@/lib/demo-store";
 import { serverApi } from "@/lib/server-api";
 import { formatINR } from "@/lib/utils";
-
-export const dynamic = "force-dynamic";
 
 type Props = { params: { id: string } };
 
@@ -55,12 +53,16 @@ export default async function CustomerDetailPage({ params }: Props) {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="accent">
-            <Link href={`/repairs/new?customerId=${customer.id}`}>New job</Link>
+            <AdminLink
+              href={`/dashboard?name=${encodeURIComponent(customer.name)}&phone=${encodeURIComponent(customer.phone)}`}
+            >
+              New job
+            </AdminLink>
           </Button>
           <Button asChild variant="outline">
-            <Link href={`/customers/${customer.id}/print`} target="_blank">
+            <AdminLink href={`/customers/${customer.id}/print`} target="_blank">
               Print receipt
-            </Link>
+            </AdminLink>
           </Button>
           <DeleteCustomerButton
             customerId={customer.id}
@@ -79,7 +81,11 @@ export default async function CustomerDetailPage({ params }: Props) {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold text-navy dark:text-white">Repair history</h2>
           <Button asChild size="sm" variant="outline">
-            <Link href={`/repairs/new?customerId=${customer.id}`}>New job for this customer</Link>
+            <AdminLink
+              href={`/dashboard?name=${encodeURIComponent(customer.name)}&phone=${encodeURIComponent(customer.phone)}`}
+            >
+              New job for this customer
+            </AdminLink>
           </Button>
         </div>
         <DataTable columns={["Job ID", "Device", "Issue", "Status", "Amount", "Date", ""]} empty={repairs.length === 0}>
@@ -99,9 +105,9 @@ export default async function CustomerDetailPage({ params }: Props) {
                 <td className="px-4 py-3 text-muted">{r.amount != null ? formatINR(r.amount) : "N/A"}</td>
                 <td className="px-4 py-3 text-muted">{format(r.createdAt, "dd MMM yyyy")}</td>
                 <td className="px-4 py-3 text-right">
-                  <Link href={`/repairs/${r.id}`} className="text-sm text-accent">
+                  <AdminLink href={`/repairs/${r.id}`} className="text-sm text-accent">
                     Open
-                  </Link>
+                  </AdminLink>
                 </td>
               </tr>
             );

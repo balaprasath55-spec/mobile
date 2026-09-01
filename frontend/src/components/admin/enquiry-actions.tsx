@@ -1,43 +1,46 @@
 "use client";
 
-import { apiUrl } from "@/lib/api-client";
-
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 import { DeleteConfirmButton } from "@/components/admin/delete-confirm-button";
 import { Button } from "@/components/ui/button";
+import { useRefreshAdminData } from "@/lib/use-refresh-admin-data";
 
 export function EnquiryActions({ id, status }: { id: string; status: string }) {
   const router = useRouter();
+  const refreshData = useRefreshAdminData();
   const [loading, setLoading] = useState(false);
 
   async function setStatus(next: string) {
     setLoading(true);
-    await fetch(apiUrl(`/api/enquiries/${id}`), {
+    const res = await apiFetch(`/api/enquiries/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: next }),
+      json: { status: next },
     });
     setLoading(false);
-    router.refresh();
+    if (!res.ok) return;
+    refreshData();
   }
 
   async function convert(createJob: boolean) {
     setLoading(true);
-    const res = await fetch(apiUrl(`/api/enquiries/${id}`), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ createJob }),
-    });
-    setLoading(false);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data.repair?.id) {
-      router.push(`/repairs/${data.repair.id}`);
-    } else if (data.customer?.id) {
-      router.push(`/customers/${data.customer.id}`);
-    } else {
-      router.refresh();
+    try {
+      const res = await apiFetch(`/api/enquiries/${id}`, {
+        method: "POST",
+        json: { createJob },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.repair?.id) {
+        router.push(`/repairs/${data.repair.id}`);
+      } else if (data.customer?.id) {
+        router.push(`/customers/${data.customer.id}`);
+      } else {
+        refreshData();
+      }
+    } finally {
+      setLoading(false);
     }
   }
 

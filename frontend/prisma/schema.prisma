@@ -15,12 +15,8 @@ enum Role {
 
 enum RepairStatus {
   RECEIVED
-  DIAGNOSED
   IN_REPAIR
-  QUALITY_CHECK
-  READY_FOR_DELIVERY
   DELIVERED
-  CLOSED
 }
 
 enum EnquiryStatus {

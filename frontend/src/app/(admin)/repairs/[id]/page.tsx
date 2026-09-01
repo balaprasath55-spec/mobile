@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RepairDetailView } from "@/components/admin/repair-detail-view";
 import type { DemoCustomer, DemoRepair } from "@/lib/demo-store";
-import { serverApi } from "@/lib/server-api";
-
-export const dynamic = "force-dynamic";
+import {
+  fetchCatalogBrands,
+  fetchCatalogModels,
+  inferBrandIdFromModelId,
+  serverApi,
+} from "@/lib/server-api";
 
 type Props = { params: { id: string } };
 
@@ -30,5 +33,13 @@ export default async function RepairDetailPage({ params }: Props) {
     notFound();
   }
 
-  return <RepairDetailView repair={repair} customer={customer} />;
+  const brandId = inferBrandIdFromModelId(repair.modelId);
+  const [brands, initialModels] = await Promise.all([
+    fetchCatalogBrands(),
+    brandId ? fetchCatalogModels(brandId) : Promise.resolve([]),
+  ]);
+
+  return (
+    <RepairDetailView repair={repair} customer={customer} brands={brands} initialModels={initialModels} />
+  );
 }

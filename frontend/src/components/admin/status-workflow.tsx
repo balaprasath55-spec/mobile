@@ -1,13 +1,16 @@
 "use client";
 
-import { apiUrl } from "@/lib/api-client";
-
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { apiFetch } from "@/lib/api-client";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { JobStatusBadge } from "@/components/admin/job-status-badge";
 import { updateLocalRepairStatus } from "@/lib/demo-local";
-import { REPAIR_STATUS_FLOW, REPAIR_STATUS_LABELS } from "@/lib/repairs";
+import { useRefreshAdminData } from "@/lib/use-refresh-admin-data";
+import {
+  REPAIR_STATUS_FLOW,
+  REPAIR_STATUS_LABELS,
+  normalizeRepairStatus,
+} from "@/lib/repairs";
 import type { DemoRepairStatus } from "@/lib/demo-store";
 
 export function StatusWorkflow({
@@ -16,13 +19,17 @@ export function StatusWorkflow({
   local = false,
 }: {
   repairId: string;
-  status: DemoRepairStatus;
+  status: DemoRepairStatus | string;
   local?: boolean;
 }) {
-  const router = useRouter();
+  const refreshData = useRefreshAdminData();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [current, setCurrent] = useState(status);
+  const [current, setCurrent] = useState(() => normalizeRepairStatus(status));
+
+  useEffect(() => {
+    setCurrent(normalizeRepairStatus(status));
+  }, [status]);
   const idx = REPAIR_STATUS_FLOW.indexOf(current);
   const next = idx >= 0 && idx < REPAIR_STATUS_FLOW.length - 1 ? REPAIR_STATUS_FLOW[idx + 1] : null;
 
@@ -41,10 +48,9 @@ export function StatusWorkflow({
       return;
     }
 
-    const res = await fetch(apiUrl(`/api/repairs/${repairId}/status`), {
+    const res = await apiFetch(`/api/repairs/${repairId}/status`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: nextStatus }),
+      json: { status: nextStatus },
     });
     setLoading(false);
     if (!res.ok) {
@@ -52,7 +58,7 @@ export function StatusWorkflow({
       return;
     }
     setCurrent(nextStatus);
-    router.refresh();
+    refreshData();
   }
 
   return (
@@ -80,7 +86,12 @@ export function StatusWorkflow({
         ))}
       </ol>
       {next ? (
-        <Button className="mt-4 h-12 w-full text-base md:w-auto" variant="accent" disabled={loading} onClick={() => setStatus(next)}>
+        <Button
+          className="mt-4 h-12 w-full text-base md:w-auto"
+          variant="accent"
+          disabled={loading}
+          onClick={() => setStatus(next)}
+        >
           Advance to {REPAIR_STATUS_LABELS[next]}
         </Button>
       ) : null}

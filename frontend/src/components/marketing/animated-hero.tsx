@@ -99,7 +99,7 @@ export function AnimatedHero() {
                   <p className="text-xs uppercase tracking-widest text-white/50">Live status</p>
                   <p className="mt-2 font-display text-2xl font-semibold">Display repair</p>
                   <div className="mt-6 space-y-3">
-                    {["Diagnosed", "In repair", "Quality check"].map((step, i) => (
+                    {["Received", "In repair", "Delivered"].map((step, i) => (
                       <motion.div
                         key={step}
                         initial={reduce ? false : { opacity: 0, x: -12 }}

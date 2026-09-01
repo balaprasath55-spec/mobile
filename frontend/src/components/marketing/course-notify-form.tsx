@@ -1,6 +1,6 @@
 "use client";
 
-import { apiUrl } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
 
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ export function CourseNotifyForm() {
     e.preventDefault();
     setLoading(true);
     const fd = new FormData(e.currentTarget);
-    const res = await fetch(apiUrl("/api/course/notify"), {
+    const res = await apiFetch("/api/course/notify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: fd.get("name"), contact: fd.get("contact") }),

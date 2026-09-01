@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Suspense } from "react";
+import { AdminLink } from "@/components/admin/admin-link";
 import type { Metadata } from "next";
 import { AdminSearchBar } from "@/components/admin/admin-search-bar";
 import { DataTable, Pagination } from "@/components/admin/data-table";
@@ -9,7 +9,6 @@ import type { DemoCustomer, DemoRepair } from "@/lib/demo-store";
 import { highlightSequentialMatch } from "@/lib/search-utils";
 import { serverApi } from "@/lib/server-api";
 
-export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Customers" };
 
 type CustomerRow = DemoCustomer & {
@@ -58,7 +57,7 @@ export default async function CustomersPage({
           <p className="mt-1 text-sm text-muted">{total} total</p>
         </div>
         <Button asChild variant="accent" size="sm">
-          <Link href="/repairs/new">New job</Link>
+          <AdminLink href="/dashboard">New job</AdminLink>
         </Button>
       </div>
 
@@ -71,7 +70,7 @@ export default async function CustomersPage({
           const latest = c.repairs[0] ?? null;
           return (
             <li key={c.id}>
-              <Link
+              <AdminLink
                 href={`/customers/${c.id}`}
                 className="flex items-center justify-between gap-3 rounded-2xl bg-white p-3 soft-shadow active:bg-surface dark:bg-navy-800"
               >
@@ -86,7 +85,7 @@ export default async function CustomersPage({
                   <p className="text-xs text-muted">{c._count.repairs} jobs</p>
                   {latest ? <JobStatusBadge status={latest.status} /> : null}
                 </div>
-              </Link>
+              </AdminLink>
             </li>
           );
         })}
@@ -102,9 +101,9 @@ export default async function CustomersPage({
             return (
               <tr key={c.id} className="border-t border-navy/5 dark:border-white/10">
                 <td className="px-4 py-3 font-medium text-navy dark:text-white">
-                  <Link href={`/customers/${c.id}`} className="hover:text-accent">
+                  <AdminLink href={`/customers/${c.id}`} className="hover:text-accent">
                     {highlightSequentialMatch(c.name, qDisplay)}
-                  </Link>
+                  </AdminLink>
                 </td>
                 <td className="px-4 py-3 text-muted">{highlightSequentialMatch(c.phone, qDisplay)}</td>
                 <td className="px-4 py-3 text-muted">
@@ -122,9 +121,9 @@ export default async function CustomersPage({
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link href={`/customers/${c.id}`} className="text-sm text-accent">
+                  <AdminLink href={`/customers/${c.id}`} className="text-sm text-accent">
                     Open
-                  </Link>
+                  </AdminLink>
                 </td>
               </tr>
             );

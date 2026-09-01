@@ -7,24 +7,22 @@ const columns = [
     links: [
       { href: "/services", label: "All services" },
       { href: "/pricing", label: "Price estimator" },
-      { href: "/courier", label: "Courier repair" },
-      { href: "/devices", label: "Supported devices" },
+      { href: "/displays", label: "iPhone displays" },
     ],
   },
   {
     title: "Company",
     links: [
-      { href: "/about", label: "About" },
+      { href: "/about", label: "About & contact" },
       { href: "/why-us", label: "Why us" },
       { href: "/testimonials", label: "Reviews" },
-      { href: "/gallery", label: "Gallery" },
       { href: "/faq", label: "FAQ" },
     ],
   },
   {
     title: "Support",
     links: [
-      { href: "/contact", label: "Contact" },
+      { href: "/about#contact", label: "Contact" },
       { href: "/enquiry", label: "Enquiry" },
       { href: "/courses", label: "Courses" },
       { href: "/privacy", label: "Privacy" },

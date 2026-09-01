@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
+import { Clock, MapPin, MessageCircle, Phone } from "lucide-react";
 import { Section, SectionHeading } from "@/components/marketing/section";
+import { Button } from "@/components/ui/button";
+import { SITE } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "About Us",
-  description: "The story behind MR Mobile Zone Service, Chennai's premium mobile repair workshop.",
+  title: "About & Contact",
+  description:
+    "About MR Mobile Zone Service, Chennai — our story, team, and how to visit, call, or WhatsApp us in George Town.",
   alternates: { canonical: "/about" },
 };
 
@@ -51,6 +56,7 @@ export default function AboutPage() {
           </p>
         </div>
       </Section>
+
       <Section>
         <div className="grid items-center gap-8 md:grid-cols-2 md:gap-12">
           <figure className="overflow-hidden rounded-2xl soft-shadow">
@@ -84,6 +90,7 @@ export default function AboutPage() {
           </div>
         </div>
       </Section>
+
       <Section className="bg-surface dark:bg-navy-900/50">
         <SectionHeading title="Milestones" />
         <ol className="grid gap-4 md:grid-cols-2">
@@ -95,8 +102,12 @@ export default function AboutPage() {
           ))}
         </ol>
       </Section>
+
       <Section>
-        <SectionHeading title="Team & certifications" subtitle="Microsoldering-trained technicians, ESD protocols, and continuous parts quality audits." />
+        <SectionHeading
+          title="Team & certifications"
+          subtitle="Microsoldering-trained technicians, ESD protocols, and continuous parts quality audits."
+        />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {team.map((role) => (
             <figure key={role.title} className="overflow-hidden rounded-2xl border border-navy/5 dark:border-white/10">
@@ -115,6 +126,76 @@ export default function AboutPage() {
               </figcaption>
             </figure>
           ))}
+        </div>
+      </Section>
+
+      <Section id="contact" className="scroll-mt-20 border-t border-navy/5 dark:border-white/10">
+        <SectionHeading title="Contact us" subtitle={SITE.addressShort} />
+        <div className="grid gap-8 md:grid-cols-2">
+          <div className="space-y-5">
+            <div className="flex items-start gap-3 text-sm text-muted">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+              <p className="min-w-0 break-words">{SITE.address}</p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Button asChild variant="accent" className="w-full sm:w-auto">
+                <a href={`tel:${SITE.phone}`}>
+                  <Phone className="h-4 w-4" /> Call {SITE.phoneDisplay}
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="w-full sm:w-auto">
+                <a href={`https://wa.me/${SITE.whatsapp}`} target="_blank" rel="noreferrer">
+                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                </a>
+              </Button>
+              <Button asChild variant="secondary" className="w-full sm:w-auto">
+                <Link href="/enquiry">Send an enquiry</Link>
+              </Button>
+            </div>
+            <p className="break-all text-sm text-muted">{SITE.email}</p>
+
+            <div className="rounded-2xl border border-navy/5 p-5 dark:border-white/10">
+              <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-navy dark:text-white">
+                <Clock className="h-4 w-4 text-accent" />
+                Opening hours
+              </div>
+              <ul className="space-y-2.5 text-sm">
+                {SITE.hours.map((h) => (
+                  <li
+                    key={h.day}
+                    className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+                  >
+                    <span className="text-muted">{h.day}</span>
+                    <span
+                      className={
+                        h.time === "Closed"
+                          ? "font-medium text-red-600 dark:text-red-400"
+                          : "font-medium text-navy dark:text-white sm:text-right"
+                      }
+                    >
+                      {h.time}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div>
+            <iframe
+              title="MR Mobile Zone map, George Town, Chennai"
+              className="h-72 w-full rounded-2xl soft-shadow sm:h-80 md:h-full md:min-h-[360px]"
+              loading="lazy"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+              src={SITE.mapEmbedUrl}
+            />
+            <p className="mt-3 text-center text-xs text-muted md:text-left">
+              <a href={SITE.mapsUrl} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+                Open in Google Maps
+              </a>
+            </p>
+          </div>
         </div>
       </Section>
     </>

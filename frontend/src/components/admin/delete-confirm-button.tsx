@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { apiUrl } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
+import { useRefreshAdminData } from "@/lib/use-refresh-admin-data";
 import { cn } from "@/lib/utils";
 
 type DeleteConfirmButtonProps = {
@@ -26,6 +27,7 @@ export function DeleteConfirmButton({
   onSuccess,
 }: DeleteConfirmButtonProps) {
   const router = useRouter();
+  const refreshData = useRefreshAdminData();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -34,8 +36,7 @@ export function DeleteConfirmButton({
 
     setLoading(true);
     setError("");
-    const target = url.startsWith("http") ? url : apiUrl(url);
-    const res = await fetch(target, { method: "DELETE" });
+    const res = await apiFetch(url, { method: "DELETE" });
     setLoading(false);
 
     if (!res.ok) {
@@ -46,12 +47,14 @@ export function DeleteConfirmButton({
 
     if (onSuccess) {
       onSuccess();
+      refreshData();
       return;
     }
     if (successRedirect) {
       router.push(successRedirect);
+      return;
     }
-    router.refresh();
+    refreshData();
   }
 
   return (

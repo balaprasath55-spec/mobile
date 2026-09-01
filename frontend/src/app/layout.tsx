@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { AppProviders } from "@/components/app-providers";
 import "./globals.css";
 import { SITE } from "@/lib/utils";
 
@@ -47,7 +48,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body
         className={`${sans.variable} ${display.variable} min-h-screen overflow-x-clip bg-white antialiased dark:bg-navy-900`}
       >
-        {children}
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
